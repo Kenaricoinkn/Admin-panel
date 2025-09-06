@@ -1,402 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KenariCoin Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KenariCoin Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    @keyframes fade-in-down {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-down {
-      animation: fade-in-down 0.3s ease-out;
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white font-sans">
 
-  <!-- =======================
-       USER STAKING PANEL
-  ======================= -->
-  <section id="userPanel" class="page-section max-w-3xl mx-auto text-center py-8">
-    <h2 class="text-2xl font-bold mb-4 text-yellow-400">KenariCoin Staking</h2>
-    <p class="mb-6 text-gray-300">Stake KN token kamu dan dapatkan reward APY otomatis!</p>
-
-    <div class="bg-gray-800 p-6 rounded-xl shadow space-y-4">
-      <button onclick="connectWallet()" 
-        class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400">
-        🔗 Connect Wallet
-      </button>
-
-      <div>
-        <input type="number" id="stakeAmount" placeholder="Jumlah KN" 
-          class="w-full p-3 mb-3 bg-gray-900 border border-gray-600 rounded-xl text-white">
-        <button onclick="stakeTokens()" 
-          class="w-full py-3 bg-green-500 font-bold rounded-xl hover:bg-green-400">Stake</button>
-      </div>
-
-      <div>
-        <input type="number" id="withdrawAmount" placeholder="Jumlah KN" 
-          class="w-full p-3 mb-3 bg-gray-900 border border-gray-600 rounded-xl text-white">
-        <button onclick="withdrawTokens()" 
-          class="w-full py-3 bg-red-500 font-bold rounded-xl hover:bg-red-400">Withdraw</button>
-      </div>
-
-      <button onclick="claimReward()" 
-        class="w-full py-3 bg-blue-500 font-bold rounded-xl hover:bg-blue-400">Claim Reward</button>
-
-      <p id="userInfo" class="mt-4 text-gray-300"></p>
-    </div>
-  </section>
-
-  <!-- =======================
-       ADMIN PANEL
-  ======================= -->
-
-  <!-- Admin Login -->
-  <section id="adminLogin" class="page-section max-w-md mx-auto text-center active">
-    <h2 class="text-2xl font-bold mb-4 text-yellow-400">Admin Login</h2>
-    <div class="bg-gray-800 p-6 rounded-xl shadow">
-      <input type="text" id="adminUser" placeholder="Username"
-        class="w-full p-3 mb-3 bg-gray-900 border border-gray-600 rounded-xl text-white">
-      <input type="password" id="adminPass" placeholder="Password"
-        class="w-full p-3 mb-3 bg-gray-900 border border-gray-600 rounded-xl text-white">
-      <button onclick="adminLogin()" 
-        class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400">
+  <!-- Login Page -->
+  <section id="loginPage" class="h-screen flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-xl shadow w-96">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Admin Login</h2>
+      <input type="text" id="adminUser" placeholder="Username" 
+             class="w-full p-3 mb-4 rounded bg-gray-700 text-white"/>
+      <input type="password" id="adminPass" placeholder="Password" 
+             class="w-full p-3 mb-4 rounded bg-gray-700 text-white"/>
+      <button onclick="doLogin()" 
+              class="w-full py-3 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-400">
         Login
       </button>
+      <p id="loginError" class="text-red-400 mt-3 hidden">❌ Username atau Password salah</p>
     </div>
   </section>
 
   <!-- Admin Panel -->
-  <section id="adminPanel" class="page-section max-w-6xl mx-auto text-center hidden py-8">
-    <h2 class="text-2xl font-bold mb-4 text-yellow-400">Admin Panel</h2>
-    <p class="mb-2 text-gray-400 text-sm">⟳ Leaderboard auto-refresh setiap 60 detik</p>
+  <section id="adminPanel" class="hidden p-6">
+    <h2 class="text-3xl font-bold text-yellow-400 mb-6">📊 KenariCoin Admin Panel</h2>
 
-    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-      <div class="flex gap-2 flex-wrap">
-        <button onclick="exportCSV(false)" 
-          class="px-4 py-2 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400">
-          ⬇️ Export Semua (CSV)
-        </button>
-        <button onclick="exportCSV(true)" 
-          class="px-4 py-2 bg-yellow-600 text-black font-bold rounded-xl hover:bg-yellow-500">
-          📑 Export Halaman Aktif (CSV)
-        </button>
-        <button onclick="exportExcel(false)" 
-          class="px-4 py-2 bg-green-500 text-white font-bold rounded-xl hover:bg-green-400">
-          📊 Export Semua (Excel)
-        </button>
-        <button onclick="exportExcel(true)" 
-          class="px-4 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500">
-          📑 Export Halaman Aktif (Excel)
-        </button>
-        <button onclick="refreshNow()" 
-          class="px-4 py-2 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400">
-          ⟳ Refresh Sekarang
-        </button>
-      </div>
+   <!-- Leaderboard -->
+<div class="mb-8">
+  <h3 class="text-xl font-semibold mb-3">🏆 Leaderboard Staker</h3>
 
-      <input type="text" id="searchWallet" placeholder="🔍 Cari wallet..."
-        onkeyup="filterTable()" 
-        class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-xl text-white w-60">
+  <!-- Filter & Sort Controls -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
+    <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
+           class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
+           oninput="renderAdminLeaderboard()" />
+
+    <select id="sortAdmin" onchange="renderAdminLeaderboard()"
+            class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
+      <option value="rank">Sort by Rank</option>
+      <option value="amount">Sort by Staked</option>
+    </select>
+  </div>
+
+  <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
+    <thead class="bg-gray-800 text-yellow-400">
+      <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
+    </thead>
+    <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
+      <tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <button onclick="exportCSV()" 
+          class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
+    ⬇️ Export CSV
+  </button>
+</div>
+
+    <!-- Bonus -->
+    <div class="mb-8">
+      <h3 class="text-xl font-semibold mb-3">🎁 Bonus Reward</h3>
+      <input type="text" id="bonusAddress" placeholder="Wallet Address" 
+             class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+      <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
+             class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+      <button onclick="giveBonus()" 
+              class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
+        ✅ Kirim Bonus
+      </button>
+      <p id="bonusStatus" class="mt-2"></p>
     </div>
 
-    <table class="w-full text-left border border-gray-700 rounded-xl overflow-hidden">
-      <thead class="bg-gray-800 text-yellow-400">
-        <tr>
-          <th class="p-2">Rank</th>
-          <th class="p-2">Wallet</th>
-          <th class="p-2 cursor-pointer hover:text-white" onclick="sortTable()">Staked KN ⬍</th>
-          <th class="p-2">Action</th>
-        </tr>
-      </thead>
-      <tbody id="topStakers" class="bg-gray-900 text-gray-300">
-        <tr>
-          <td colspan="4" class="p-3 text-center">
-            <div class="flex justify-center items-center gap-2">
-              <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-              </svg>
-              <span>Loading leaderboard...</span>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div id="pagination" class="flex justify-center gap-2 mt-4"></div>
-
-    <h3 class="text-xl font-bold mt-8 mb-2 text-yellow-400">📜 Log Aktivitas</h3>
-    <div id="adminLogs" class="bg-gray-800 p-4 rounded-xl text-left text-gray-300 h-48 overflow-y-auto text-sm">
-      <p class="text-gray-500">Belum ada aktivitas...</p>
+    <!-- Log -->
+    <div>
+      <h3 class="text-xl font-semibold mb-3">📝 Log Aktivitas</h3>
+      <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
     </div>
   </section>
 
-  <!-- Toast container -->
-  <div id="toast-container" class="fixed top-4 right-4 space-y-2 z-50"></div>
-
   <script>
-  // ===================== CONFIG =====================
-  const ADMIN_USER = "devkenari";
-  const ADMIN_PASS = "Snowboy14";
-  const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78"; // ganti alamat kontrak staking
-  const STAKING_ABI = [ 
-    "function getAllStakers() view returns (address[])",
-    "function getStaked(address user) view returns (uint256)",
-    "function giveBonus(address to, uint256 amount) external",
-    "function stake(uint256 amount) external",
-    "function withdraw(uint256 amount) external",
-    "function claimReward() external"
-  ];
+    // ======================
+    // Konfigurasi Admin
+    // ======================
+    const ADMIN_USER = "dev";
+    const ADMIN_PASS = "kenari123";
+    const STAKING_CONTRACT = "0xYourStakingContract"; // ganti dgn kontrak
+    const KN = "0xYourTokenContract"; // ganti dgn kontrak token
+    let provider, signer;
 
-  let provider, signer, staking;
-  let stakerData = [];
-  let currentPage = 1;
-  const perPage = 10;
-  let sortAsc = true;
+    // ======================
+    // Login
+    // ======================
+    function doLogin(){
+      const u = document.getElementById("adminUser").value;
+      const p = document.getElementById("adminPass").value;
+      if(u === ADMIN_USER && p === ADMIN_PASS){
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+        log("✅ Admin login sukses");
+        loadLeaderboard();
+      } else {
+        document.getElementById("loginError").classList.remove("hidden");
+      }
+    }
 
-  // ===================== WALLET (USER) =====================
-  async function connectWallet() {
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    signer = provider.getSigner();
-    staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
-    const addr = await signer.getAddress();
-    showToast("🔗 Wallet connected: " + addr, "success");
+    // ======================
+    // Leaderboard
+    // ======================
+    let adminStakerData = [];
+let refreshInterval;
+
+async function loadLeaderboard(){
+  const tbody = document.getElementById("adminLeaderboard");
+  tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
+
+  const contract = new ethers.Contract(
+    STAKING_CONTRACT,
+    [
+      "function getAllStakers() view returns (address[])",
+      "function getStaked(address user) view returns (uint256)"
+    ],
+    provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
+  );
+
+  try {
+    const stakers = await contract.getAllStakers();
+    adminStakerData = [];
+    for (let addr of stakers) {
+      const amount = await contract.getStaked(addr);
+      adminStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+    }
+
+    // Default sort by amount (desc)
+    adminStakerData.sort((a, b) => b.amount - a.amount);
+
+    renderAdminLeaderboard();
+    log("📊 Leaderboard dimuat");
+  } catch(err){
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
+  }
+}
+
+function renderAdminLeaderboard(){
+  const tbody = document.getElementById("adminLeaderboard");
+  if (!tbody) return;
+
+  let data = [...adminStakerData];
+
+  // Filter
+  const search = document.getElementById("searchAdmin")?.value.trim().toLowerCase();
+  if (search) {
+    data = data.filter(item => item.addr.toLowerCase().includes(search));
   }
 
-  async function stakeTokens() {
-    const amount = document.getElementById("stakeAmount").value;
-    if (!amount || amount <= 0) return showToast("Jumlah tidak valid!", "warning");
-    const parsed = ethers.utils.parseUnits(amount.toString(), 18);
-    try {
-      const tx = await staking.stake(parsed);
-      await tx.wait();
-      showToast(`✅ Staked ${amount} KN`, "success");
-    } catch (err) {
-      showToast("❌ Gagal stake: " + (err?.message || err), "error");
-    }
+  // Sort
+  const sort = document.getElementById("sortAdmin")?.value;
+  if (sort === "amount") {
+    data.sort((a, b) => b.amount - a.amount);
   }
 
-  async function withdrawTokens() {
-    const amount = document.getElementById("withdrawAmount").value;
-    if (!amount || amount <= 0) return showToast("Jumlah tidak valid!", "warning");
-    const parsed = ethers.utils.parseUnits(amount.toString(), 18);
-    try {
-      const tx = await staking.withdraw(parsed);
-      await tx.wait();
-      showToast(`✅ Withdraw ${amount} KN`, "success");
-    } catch (err) {
-      showToast("❌ Gagal withdraw: " + (err?.message || err), "error");
-    }
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Tidak ada data</td></tr>`;
+    return;
   }
 
-  async function claimReward() {
-    try {
-      const tx = await staking.claimReward();
-      await tx.wait();
-      showToast("✅ Reward berhasil diklaim", "success");
-    } catch (err) {
-      showToast("❌ Gagal claim: " + (err?.message || err), "error");
-    }
-  }
-
-  // ===================== LOGIN =====================
-  function adminLogin() {
-    const user = document.getElementById("adminUser").value;
-    const pass = document.getElementById("adminPass").value;
-    if (user === ADMIN_USER && pass === ADMIN_PASS) {
-      localStorage.setItem("adminAuth", "true");
-      document.getElementById("adminLogin").classList.add("hidden");
-      document.getElementById("adminPanel").classList.remove("hidden");
-      loadTopStakers();
-      addLog("Admin login berhasil", "success");
-      showToast("✅ Login sukses", "success");
-    } else {
-      showToast("❌ Username atau password salah!", "error");
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    if (localStorage.getItem("adminAuth") === "true") {
-      document.getElementById("adminLogin").classList.add("hidden");
-      document.getElementById("adminPanel").classList.remove("hidden");
-      loadTopStakers();
-    }
+  data.forEach((item, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td class="p-2">${i+1}</td>
+        <td class="p-2">${item.addr.slice(0,6)}...${item.addr.slice(-4)}</td>
+        <td class="p-2">${item.amount} KN</td>
+      </tr>`;
   });
+}
 
-  // ===================== LEADERBOARD =====================
-  async function loadTopStakers() {
-    const tbody = document.getElementById("topStakers");
-    tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center">⟳ Loading...</td></tr>`;
-    if (!provider) provider = new ethers.providers.Web3Provider(window.ethereum);
-    const contract = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
+// ======================
+// Login
+// ======================
+function doLogin(){
+  const u = document.getElementById("adminUser").value;
+  const p = document.getElementById("adminPass").value;
+  if(u === ADMIN_USER && p === ADMIN_PASS){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("adminPanel").classList.remove("hidden");
+    log("✅ Admin login sukses");
 
-    try {
-      const stakers = await contract.getAllStakers();
-      stakerData = [];
-      for (let addr of stakers) {
-        const amount = await contract.getStaked(addr);
-        stakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+    // Load pertama kali
+    loadLeaderboard();
+
+    // Auto refresh tiap 1 menit
+    clearInterval(refreshInterval);
+    refreshInterval = setInterval(loadLeaderboard, 60 * 1000);
+
+  } else {
+    document.getElementById("loginError").classList.remove("hidden");
+  }
+}
+
+    // ======================
+    // Bonus Reward
+    // ======================
+    async function giveBonus(){
+      try {
+        if(!window.ethereum){
+          alert("Hubungkan MetaMask untuk kirim bonus");
+          return;
+        }
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+
+        const token = new ethers.Contract(
+          KN,
+          [
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function decimals() view returns (uint8)"
+          ],
+          signer
+        );
+
+        const addr = document.getElementById("bonusAddress").value;
+        const amount = document.getElementById("bonusAmount").value;
+        const decimals = await token.decimals();
+        const parsed = ethers.utils.parseUnits(amount.toString(), decimals);
+
+        const tx = await token.transfer(addr, parsed);
+        await tx.wait();
+
+        document.getElementById("bonusStatus").innerText = `✅ Bonus terkirim ke ${addr}`;
+        log(`🎁 Bonus ${amount} KN dikirim ke ${addr}`);
+      } catch(err){
+        console.error(err);
+        document.getElementById("bonusStatus").innerText = "❌ Gagal kirim bonus";
       }
-      stakerData.sort((a, b) => b.amount - a.amount);
-      renderTable(); renderPagination();
-    } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-red-400">❌ Gagal load leaderboard</td></tr>`;
-      showToast("❌ Gagal load leaderboard!", "error");
-      addLog("Error load leaderboard", "error");
-    }
-  }
-
-  function renderTable() {
-    const tbody = document.getElementById("topStakers");
-    tbody.innerHTML = "";
-    const start = (currentPage - 1) * perPage;
-    const end = start + perPage;
-    const pageData = stakerData.slice(start, end);
-    pageData.forEach((item, i) => {
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">${start + i + 1}</td>
-          <td class="p-2">${item.addr}</td>
-          <td class="p-2">${item.amount} KN</td>
-          <td class="p-2">
-            <button onclick="giveBonus('${item.addr}')" 
-              class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-500">
-              Kasih Bonus
-            </button>
-          </td>
-        </tr>`;
-    });
-
-    if (pageData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center">Tidak ada data</td></tr>';
-    }
-  }
-
-  function renderPagination() {
-    const totalPages = Math.ceil(stakerData.length / perPage);
-    const container = document.getElementById("pagination");
-    container.innerHTML = "";
-    if (totalPages <= 1) return;
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement("button");
-      btn.innerText = i;
-      btn.className = `px-3 py-1 rounded ${i === currentPage ? "bg-yellow-500 text-black font-bold" : "bg-gray-700 text-white hover:bg-gray-600"}`;
-      btn.onclick = () => { currentPage = i; renderTable(); renderPagination(); };
-      container.appendChild(btn);
-    }
-  }
-
-  // ===================== SEARCH & SORT =====================
-  function filterTable() {
-    const input = document.getElementById("searchWallet").value.toLowerCase();
-    const rows = document.querySelectorAll("#topStakers tr");
-    rows.forEach(row => {
-      const wallet = row.cells[1]?.innerText.toLowerCase();
-      if (wallet) {
-        row.style.display = wallet.includes(input) ? "" : "none";
-      }
-    });
-  }
-
-  function sortTable() {
-    stakerData.sort((a, b) => sortAsc ? a.amount - b.amount : b.amount - a.amount);
-    sortAsc = !sortAsc; renderTable();
-  }
-
-  // ===================== BONUS =====================
-  async function giveBonus(address) {
-    const amount = prompt("Jumlah KN untuk bonus:");
-    if (!amount || isNaN(amount) || amount <= 0) return showToast("Jumlah tidak valid!", "warning");
-    if (!signer) { provider = new ethers.providers.Web3Provider(window.ethereum); signer = provider.getSigner(); }
-    try {
-      const contract = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
-      const parsed = ethers.utils.parseUnits(amount.toString(), 18);
-      const tx = await contract.giveBonus(address, parsed); await tx.wait();
-      showToast(`✅ Bonus ${amount} KN ke ${address}`, "success");
-      addLog(`Bonus ${amount} KN dikirim ke ${address}`, "success");
-    } catch (err) {
-      showToast("❌ Gagal bonus: " + (err?.message || err), "error");
-      addLog(`Gagal bonus ke ${address}: ${err?.message || err}`, "error");
-    }
-  }
-
-  // ===================== EXPORT =====================
-  function exportCSV(currentOnly = false) {
-    const rows = [["Rank","Wallet","Staked KN"]];
-    let data = currentOnly ? stakerData.slice((currentPage-1)*perPage, currentPage*perPage) : stakerData;
-    data.forEach((item,i)=> rows.push([ currentOnly ? ((currentPage-1)*perPage + i + 1) : (i+1), item.addr, item.amount ]));
-    let csvContent = rows.map(e => e.join(",")).join("\\n");
-    const blob = new Blob([csvContent], { type:"text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a"); link.href = url;
-    link.download = currentOnly ? "staking_page.csv":"staking_leaderboard.csv";
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  }
-
-  function exportExcel(currentOnly = false) {
-    const rows = [["Rank","Wallet","Staked KN"]];
-    let data = currentOnly ? stakerData.slice((currentPage-1)*perPage, currentPage*perPage) : stakerData;
-    data.forEach((item,i)=> rows.push([ currentOnly ? ((currentPage-1)*perPage + i + 1) : (i+1), item.addr, item.amount ]));
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
-    XLSX.writeFile(wb, currentOnly ? "staking_page.xlsx":"staking_leaderboard.xlsx");
-  }
-
-  // ===================== REFRESH =====================
-  function refreshNow(){ loadTopStakers(); showToast("⟳ Refreshed","success"); addLog("Leaderboard di-refresh manual","info"); }
-  let refreshInterval = 60; // detik
-  setInterval(()=>{ if(localStorage.getItem("adminAuth")==="true"){ loadTopStakers(); addLog("Auto-refresh","info"); } }, refreshInterval * 1000);
-
-  // ===================== TOAST & LOG =====================
-  function showToast(message,type="info"){ 
-    const c=document.getElementById("toast-container");
-    const colors={
-      success:"bg-green-500",
-      error:"bg-red-500",
-      info:"bg-blue-500",
-      warning:"bg-yellow-500 text-black"
-    };
-    const t=document.createElement("div"); 
-    t.className=`${colors[type]||colors.info} text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-down`;
-    t.innerText=message; 
-    c.appendChild(t);
-
-    // auto remove after 3s
-    setTimeout(()=>{
-      t.classList.add("opacity-0","transition","duration-500");
-      setTimeout(()=>t.remove(),500);
-    },3000);
-  }
-
-  function addLog(message,type="info"){ 
-    const c=document.getElementById("adminLogs");
-
-    // hapus placeholder kalau masih ada
-    if(c.children.length===1 && c.children[0].innerText.includes("Belum ada aktivitas")){ 
-      c.innerHTML=""; 
     }
 
-    const colors={
-      success:"text-green-400",
-      error:"text-red-400",
-      info:"text-blue-400",
-      warning:"text-yellow-400"
-    };
+    // ======================
+    // Export CSV
+    // ======================
+    function exportCSV(){
+      let rows = [["Rank","Wallet","Staked KN"]];
+      const trs = document.querySelectorAll("#adminLeaderboard tr");
+      trs.forEach(tr => {
+        let cols = [...tr.querySelectorAll("td")].map(td => td.innerText);
+        if(cols.length) rows.push(cols);
+      });
+      let csv = rows.map(r => r.join(",")).join("\n");
+      let blob = new Blob([csv], { type: "text/csv" });
+      let link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "leaderboard.csv";
+      link.click();
+      log("⬇️ Export CSV");
+    }
 
-    const time=new Date().toLocaleTimeString();
-    const p=document.createElement("p"); 
-    p.className=colors[type]||colors.info; 
-    p.innerText=`[${time}] ${message}`;
-    c.prepend(p); // log terbaru di atas
-  }
+    // ======================
+    // Log
+    // ======================
+    function log(msg){
+      const li = document.createElement("li");
+      li.innerText = new Date().toLocaleTimeString()+" - "+msg;
+      document.getElementById("logList").appendChild(li);
+    }
   </script>
+
 </body>
 </html>
