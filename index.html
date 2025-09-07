@@ -398,12 +398,12 @@ const faucetAbi = [
     }
 
 // -----------------------
-// ADMIN LEADERBOARD
+// LEADERBOARD (BSC TESTNET) — tanpa ERC20_ABI, decimals fix = 6
 // -----------------------
-async function loadAdminLeaderboard() {
+async function loadLeaderboard(){
   const tbody = document.getElementById("adminLeaderboard");
   const totalBox = document.getElementById("totalStakedBox");
-  if (!tbody) return;
+  if (!tbody || !totalBox) return;
 
   // Spinner awal
   tbody.innerHTML = `
@@ -428,10 +428,15 @@ async function loadAdminLeaderboard() {
     </div>`;
 
   try {
-    // provider testnet
-    const readProvider = web3Provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
+    // Gunakan RPC BSC Testnet (utama + backup)
+    let readProvider;
+    try {
+      readProvider = web3Provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545/");
+    } catch {
+      readProvider = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
+    }
 
-    // kontrak staking khusus leaderboard
+    // Kontrak khusus leaderboard: hanya pakai fungsi yang dibutuhkan
     const contract = new ethers.Contract(
       STAKING_CONTRACT,
       [
@@ -441,9 +446,7 @@ async function loadAdminLeaderboard() {
       readProvider
     );
 
-    // kontrak token untuk ambil decimals
-    const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
-    const decimals = await token.decimals();
+    const DECIMALS = 6; // KN pakai 6 desimal
 
     const stakers = await contract.getAllStakers();
     if (!stakers || stakers.length === 0) {
@@ -452,44 +455,50 @@ async function loadAdminLeaderboard() {
       return;
     }
 
-    // ambil semua stake paralel
-    const stakes = await Promise.all(stakers.map(addr => contract.getStaked(addr)));
+    // Ambil semua stake paralel
+    const stakesBn = await Promise.all(stakers.map(addr => contract.getStaked(addr)));
 
+    // Hitung total + siapkan data
     let total = ethers.BigNumber.from(0);
-    let stakerData = stakers.map((addr, i) => {
-      const amt = stakes[i];
-      total = total.add(amt);
-      return { addr, raw: parseFloat(ethers.utils.formatUnits(amt, decimals)) };
+    let data = stakers.map((addr, i) => {
+      const bn = stakesBn[i];
+      total = total.add(bn);
+      return { addr, amount: parseFloat(ethers.utils.formatUnits(bn, DECIMALS)) };
     });
 
-    // filter > 0, sort desc
-    stakerData = stakerData.filter(s => s.raw > 0).sort((a, b) => b.raw - a.raw);
+    // Filter yang 0 (opsional), lalu urut desc
+    data = data.filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount);
 
-    // update total
-    const totalParsed = ethers.utils.formatUnits(total, decimals);
+    // Update total
+    const totalParsed = ethers.utils.formatUnits(total, DECIMALS);
     totalBox.innerText = `✅ Total Staked: ${totalParsed} KN`;
 
-    // render tabel
+    // Render tabel
     tbody.innerHTML = "";
-    stakerData.forEach((s, i) => {
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">${i+1}</td>
-          <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
-          <td class="p-2">${s.raw.toFixed(2)} KN</td>
-        </tr>`;
-    });
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada staker aktif</td></tr>`;
+    } else {
+      data.forEach((s, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2">${i + 1}</td>
+            <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
+            <td class="p-2">${s.amount.toFixed(2)} KN</td>
+          </tr>`;
+      });
+    }
   } catch (err) {
-    console.error("❌ loadAdminLeaderboard error:", err);
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
+    console.error("❌ loadLeaderboard error:", err);
+    const msg = (err && (err.message || err.reason)) ? (err.message || err.reason) : String(err);
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load<br><span class="text-xs opacity-75">${msg}</span></td></tr>`;
     totalBox.innerText = "❌ Gagal hitung total staked";
   }
 }
 
-// auto refresh tiap 1 menit
+// Auto refresh tiap 1 menit (dan panggil saat halaman siap)
 document.addEventListener("DOMContentLoaded", () => {
-  loadAdminLeaderboard();
-  setInterval(loadAdminLeaderboard, 60 * 1000);
+  loadLeaderboard();
+  setInterval(loadLeaderboard, 60 * 1000);
 });
    // -----------------------
     // BONUS
