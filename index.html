@@ -1,123 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KenariCoin Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 </head>
-<body class="bg-gray-950 text-white font-sans min-h-screen">
+<body class="bg-gray-900 text-white font-sans">
 
-  <!-- LOGIN (tampil jika belum session) -->
-<section id="loginSection" class="flex items-center justify-center min-h-screen bg-gray-900">
- <section id="loginSection" class="flex items-center justify-center min-h-screen bg-gray-900">
-  <div class="bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-    <h2 class="text-2xl font-bold text-yellow-400 mb-6">🔑 Admin Login</h2>
-
-    <div class="flex flex-col gap-4">
-      <input id="adminUser" type="text" placeholder="Username"
-        class="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-
-      <input id="adminPass" type="password" placeholder="Password"
-        class="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-
-      <button onclick="doLogin()"
-        class="px-4 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-500 transition">
-        🔓 Login
+  <!-- Login Page -->
+  <section id="loginPage" class="h-screen flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-xl shadow w-96">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Admin Login</h2>
+      <input type="text" id="adminUser" placeholder="Username" 
+             class="w-full p-3 mb-4 rounded bg-gray-700 text-white"/>
+      <input type="password" id="adminPass" placeholder="Password" 
+             class="w-full p-3 mb-4 rounded bg-gray-700 text-white"/>
+      <button onclick="doLogin()" 
+              class="w-full py-3 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-400">
+        Login
       </button>
-
-      <div id="loginError" class="text-sm text-red-400 hidden">
-        ❌ Username / password salah!
-      </div>
+      <p id="loginError" class="text-red-400 mt-3 hidden">❌ Username atau Password salah</p>
     </div>
-  </div>
-</section>
+  </section>
 
-  <!-- Main (tampil kalau sudah login) -->
-  <div id="app" class="hidden">
-    <!-- Navbar -->
-    <header class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center">
-      <div class="flex items-center gap-4">
-        <h1 class="text-xl font-bold text-yellow-400">KenariCoin Admin</h1>
-        <!-- Logout (opsional manual) -->
-        <button id="logoutBtn" onclick="doLogout()" class="text-sm text-gray-300 hover:text-white hidden md:inline">Logout</button>
-      </div>
+  <!-- Admin Panel -->
+  <section id="adminPanel" class="hidden p-6">
+    <h2 class="text-3xl font-bold text-yellow-400 mb-6">📊 KenariCoin Admin Panel</h2>
 
-      <!-- Hamburger (mobile) -->
-      <button id="menuBtn" class="md:hidden text-gray-300 focus:outline-none">☰</button>
+   <!-- Leaderboard -->
+<div class="mb-8">
+  <h3 class="text-xl font-semibold mb-3">🏆 Leaderboard Staker</h3>
 
-      <!-- Nav Menu -->
-      <nav id="menuNav" class="hidden md:flex gap-6 text-sm font-semibold">
-        <a href="#" onclick="showTab('dashboard'); return false;" class="hover:text-yellow-400">📊 Dashboard</a>
-        <a href="#" onclick="showTab('leaderboard'); return false;" class="hover:text-yellow-400">🏆 Leaderboard</a>
-        <a href="#" onclick="showTab('bonus'); return false;" class="hover:text-yellow-400">🎁 Bonus Reward</a>
-        <a href="#" onclick="showTab('log'); return false;" class="hover:text-yellow-400">📝 Log Aktivitas</a>
-      </nav>
-
-      <!-- Wallet dropdown -->
-      <div class="relative">
-        <button id="walletBtn" onclick="toggleWalletDropdown()" 
-          class="px-3 py-2 bg-green-600 rounded hover:bg-green-500 text-sm">
-          Connect Wallet
-        </button>
-        <div id="walletDropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded shadow-lg p-3 z-50">
-          <button onclick="onConnect()" class="w-full text-left px-3 py-2 hover:bg-gray-700 rounded">🔌 Connect</button>
-          <button onclick="disconnect()" id="disconnectBtn" 
-            class="hidden w-full text-left px-3 py-2 hover:bg-red-600 rounded text-red-400">❌ Disconnect</button>
-          <p id="walletAddress" class="text-xs text-gray-400 mt-2"></p>
-          <hr class="my-2 border-gray-700" />
-          <button onclick="doLogout()" class="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-gray-300">🔒 Logout (end session)</button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Sections -->
-    <main class="p-6">
-      <!-- Dashboard -->
-      <section id="dashboardSection" class="text-center">
-        <!-- Logo: pakai logo.png kalau ada, kalau gak ada tampilkan fallback SVG -->
-        <img id="logoImg" src="Logo.png" alt="KenariCoin Logo" class="mx-auto w-32 h-32 mb-6" 
-             onerror="document.getElementById('logoImg').style.display='none'; document.getElementById('logoFallback').style.display='block'">
-        <div id="logoFallback" class="mx-auto mb-6" style="display:none; width:128px; height:128px;">
-          <!-- Simple inline SVG fallback (ganti sesuai selera) -->
-          <svg viewBox="0 0 100 100" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#facc15"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs>
-            <circle cx="50" cy="50" r="48" fill="url(#g)" stroke="#b45309" stroke-width="2"/>
-            <text x="50" y="58" font-size="36" text-anchor="middle" fill="#222" font-weight="700">KN</text>
-          </svg>
-        </div>
-
-        <h2 class="text-3xl font-bold text-yellow-400 mb-4">Welcome to KenariCoin Admin Panel</h2>
-        <p class="text-gray-300 leading-relaxed max-w-xl mx-auto">
-          KenariCoin (KN) adalah token BEP-20 di BNB Smart Chain dengan total supply 500 Triliun.
-          Sederhana, cepat, dan berbasis komunitas.<br>
-          Gunakan panel ini untuk mengelola staking, memberi bonus reward, dan memantau aktivitas holder.
-        </p>
-      </section>
-
-  <!-- Leaderboard -->
-<section id="leaderboardSection" class="hidden mt-6">
-  <h2 class="text-2xl font-bold text-yellow-400 mb-4">🏆 Leaderboard Staker</h2>
-
-  <!-- Total staked -->
-<div id="totalStakedBox" class="mb-4 text-lg font-semibold text-green-400">
-  <div class="flex items-center gap-2">
-    <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-    </svg>
-    Loading total staked...
-  </div>
-</div>
-
+  <!-- Filter & Sort Controls -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
     <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
-      class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
-      oninput="renderAdminLeaderboard()" />
+           class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
+           oninput="renderAdminLeaderboard()" />
 
     <select id="sortAdmin" onchange="renderAdminLeaderboard()"
-      class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
+            class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
       <option value="rank">Sort by Rank</option>
       <option value="amount">Sort by Staked</option>
     </select>
@@ -127,363 +50,190 @@
     <thead class="bg-gray-800 text-yellow-400">
       <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
     </thead>
-   <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
-  <tr>
-    <td colspan="3" class="p-3 text-center">
-      <div class="flex justify-center items-center gap-2">
-        <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-        Loading data...
-      </div>
-    </td>
-  </tr>
-</tbody>
+    <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
+      <tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>
+    </tbody>
   </table>
 
   <button onclick="exportCSV()" 
-    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
+          class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
     ⬇️ Export CSV
   </button>
-</section>
+</div>
 
-      <!-- Bonus Reward -->
-<section id="bonusSection" class="hidden mt-6">
-  <h2 class="text-2xl font-bold text-yellow-400 mb-4">🎁 Bonus Reward</h2>
+    <!-- Bonus -->
+    <div class="mb-8">
+      <h3 class="text-xl font-semibold mb-3">🎁 Bonus Reward</h3>
+      <input type="text" id="bonusAddress" placeholder="Wallet Address" 
+             class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+      <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
+             class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+      <button onclick="giveBonus()" 
+              class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
+        ✅ Kirim Bonus
+      </button>
+      <p id="bonusStatus" class="mt-2"></p>
+    </div>
 
-  <!-- Kirim Bonus -->
-  <div class="mb-6">
-    <input type="text" id="bonusAddress" placeholder="Wallet Address" 
-      class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-    <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
-      class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-    <button onclick="giveBonus()" 
-      class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
-      ✅ Kirim Bonus
-    </button>
-    <p id="bonusStatus" class="mt-2 text-sm text-gray-300"></p>
-  </div>
-
-  <!-- Atur Faucet -->
-  <div class="bg-gray-800 p-4 rounded-xl">
-    <h3 class="text-lg font-semibold mb-3">🚰 Atur Faucet</h3>
-    <input type="number" id="faucetAmount" placeholder="Jumlah token per klaim" 
-      class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-    <button onclick="setFaucetAmount()" 
-      class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
-      ⚙️ Update Faucet Amount
-    </button>
-    <p id="faucetStatus" class="mt-2 text-sm text-gray-300"></p>
-  </div>
-</section>
-
-      <!-- Log Aktivitas -->
-      <section id="logSection" class="hidden mt-6">
-        <h2 class="text-2xl font-bold text-yellow-400 mb-4">📝 Log Aktivitas</h2>
-        <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
-      </section>
-    </main>
-  </div>
+    <!-- Log -->
+    <div>
+      <h3 class="text-xl font-semibold mb-3">📝 Log Aktivitas</h3>
+      <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
+    </div>
+  </section>
 
   <script>
-// -----------------------
-// BLOCKCHAIN CONFIG
-// -----------------------
-let KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";   // token KN
-let STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78"; // staking
-let FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d"; // faucet
-let BSC_CHAIN_ID = "0x61"; // BSC Testnet
+    // ======================
+    // Konfigurasi Admin
+    // ======================
+    const ADMIN_USER = "devkenari";
+    const ADMIN_PASS = "Snowboy14";
+    const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78"; // ganti dgn kontrak
+    const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8"; // ganti dgn kontrak token
+    let provider, signer;
 
-// ===== ABI untuk token KN =====
-const ERC20_ABI = [
-  "function balanceOf(address) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function approve(address spender, uint256 amount) returns (bool)"
-];
-
-// ===== ABI untuk user staking =====
-const STAKING_ABI = [
-  "function stake(uint256 amount) external",
-  "function withdraw(uint256 amount) external",
-  "function claimReward() external",
-  "function pendingReward(address user) view returns (uint256)",
-  "function getStaked(address user) view returns (uint256)"
-];
-
-// ===== ABI untuk leaderboard =====
-const LEADERBOARD_ABI = [
-  "function getAllStakers() view returns (address[])",
-  "function getStaked(address user) view returns (uint256)"
-];
-
-// ===== ABI untuk admin =====
-const ADMIN_ABI = [
-  "function giveBonus(address to, uint256 amount) external",
-  "function faucet() external",
-  "function setAmount(uint256 _amount) external",
-  "function owner() view returns (address)"
-];
-
-let provider = null, signer = null, userAddress = null;
-
-    // -----------------------
-// LOGIN (sessionStorage)
-// -----------------------
-const ADMIN_USER = "devkenari";
-const ADMIN_PASS = "Snowboy14";
-
-function doLogin() {
-  const u = document.getElementById("adminUser").value.trim();
-  const p = document.getElementById("adminPass").value.trim();
-
-  if (u === ADMIN_USER && p === ADMIN_PASS) {
-    sessionStorage.setItem("kenariLoggedIn", "1");
-    showAppAfterLogin();
-  } else {
-    const e = document.getElementById("loginError");
-    e.classList.remove("hidden");
-    setTimeout(() => e.classList.add("hidden"), 3000);
-  }
-}
-
-function doLogout() {
-  sessionStorage.removeItem("kenariLoggedIn");
-  document.getElementById("app").classList.add("hidden");
-  document.getElementById("loginSection").classList.remove("hidden");
-}
-
-function showAppAfterLogin() {
-  document.getElementById("loginSection").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-
-  // aman → kalau ada showTab panggil, kalau gak ada di-skip
-  try { showTab("dashboard"); } catch(e) {}
-
-  // aman → leaderboard admin
-  try { loadAdminLeaderboard(); } catch(e) {}
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  if (sessionStorage.getItem("kenariLoggedIn") === "1") {
-    showAppAfterLogin();
-  } else {
-    document.getElementById("loginSection").classList.remove("hidden");
-    document.getElementById("app").classList.add("hidden");
-  }
-});
-    // -----------------------
-    // NAVBAR & HAMBURGER
-    // -----------------------
-    const menuBtn = document.getElementById("menuBtn");
-    const menuNav = document.getElementById("menuNav");
-    menuBtn.addEventListener("click", () => {
-      menuNav.classList.toggle("hidden");
-      menuNav.classList.toggle("flex");
-      menuNav.classList.toggle("flex-col");
-      menuNav.classList.toggle("bg-gray-800");
-      menuNav.classList.toggle("p-4");
-      menuNav.classList.toggle("absolute");
-      menuNav.classList.toggle("top-14");
-      menuNav.classList.toggle("right-4");
-      menuNav.classList.toggle("rounded-xl");
-    });
-
-    function closeMobileMenu(){
-      // hanya tutup kalau layar mobile (lebar < 768)
-      if(window.innerWidth < 768){
-        menuNav.classList.add("hidden");
-        menuNav.classList.remove("flex","flex-col","bg-gray-800","p-4","absolute","top-14","right-4","rounded-xl");
-      }
-      // juga tutup wallet dropdown
-      document.getElementById('walletDropdown').classList.add('hidden');
-    }
-
-    function showTab(tab) {
-      const sections = ["dashboard","leaderboard","bonus","log"];
-      sections.forEach(id => {
-        document.getElementById(id+"Section").classList.add("hidden");
-      });
-      document.getElementById(tab+"Section").classList.remove("hidden");
-      // auto-close mobile menu bila dibuka dari mobile
-      closeMobileMenu();
-    }
-
-    // -----------------------
-    // WALLET UI + CONNECT
-    // -----------------------
-    function toggleWalletDropdown() {
-      document.getElementById("walletDropdown").classList.toggle("hidden");
-    }
-
-    function updateWalletUI(address) {
-      const btn = document.getElementById("walletBtn");
-      if(address) {
-        btn.innerText = "Wallet Connected";
-        btn.classList.remove("bg-green-600","hover:bg-green-500");
-        btn.classList.add("bg-red-600","hover:bg-red-500");
-        document.getElementById("disconnectBtn").classList.remove("hidden");
-        document.getElementById("walletAddress").innerText = address.slice(0,6)+"..."+address.slice(-4);
+    // ======================
+    // Login
+    // ======================
+    function doLogin(){
+      const u = document.getElementById("adminUser").value;
+      const p = document.getElementById("adminPass").value;
+      if(u === ADMIN_USER && p === ADMIN_PASS){
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+        log("✅ Admin login sukses");
+        loadLeaderboard();
       } else {
-        btn.innerText = "Connect Wallet";
-        btn.classList.add("bg-green-600","hover:bg-green-500");
-        btn.classList.remove("bg-red-600","hover:bg-red-500");
-        document.getElementById("disconnectBtn").classList.add("hidden");
-        document.getElementById("walletAddress").innerText = "";
+        document.getElementById("loginError").classList.remove("hidden");
       }
     }
 
-    async function onConnect(){
-      let providerToUse = window.ethereum || window.okxwallet;
-      if(!providerToUse){
-        alert('No injected wallet found. Install MetaMask/OKX.');
-        return;
-      }
-      try{
-        selectedInjectedProvider = providerToUse;
-        web3Provider = new ethers.providers.Web3Provider(providerToUse, 'any');
-        await web3Provider.send('eth_requestAccounts', []);
-        signer = web3Provider.getSigner();
-        const address = await signer.getAddress();
-        updateWalletUI(address);
-        log(`🔌 Wallet connected: ${address}`);
+    // ======================
+    // Leaderboard
+    // ======================
+    let adminStakerData = [];
+let refreshInterval;
 
-        // listen changes
-        if(selectedInjectedProvider && selectedInjectedProvider.on){
-          selectedInjectedProvider.on('accountsChanged', handleAccountsChanged);
-          selectedInjectedProvider.on('chainChanged', handleChainChanged);
-        }
-      } catch(err){
-        alert('Gagal connect: '+(err?.message||err));
-      }
-    }
-
-    function handleAccountsChanged(accounts){
-      if(!accounts || accounts.length === 0){
-        disconnect();
-      } else {
-        const a = accounts[0];
-        updateWalletUI(a);
-        log('🧾 accountsChanged: ' + a);
-      }
-    }
-
-    function handleChainChanged(chainId){
-      log('🔁 chainChanged: ' + chainId);
-      if(web3Provider){
-        web3Provider.getNetwork().then(n => {
-          log('🔗 network: ' + n.chainId);
-        });
-      }
-    }
-
-    function disconnect(){
-      if(selectedInjectedProvider && selectedInjectedProvider.removeListener){
-        try{ selectedInjectedProvider.removeListener('accountsChanged', handleAccountsChanged); }catch(e){}
-        try{ selectedInjectedProvider.removeListener('chainChanged', handleChainChanged); }catch(e){}
-      }
-      web3Provider = null;
-      signer = null;
-      selectedInjectedProvider = null;
-      updateWalletUI(null);
-      log('🔌 Wallet disconnected');
-    }
-=========LEADERBOARD=======
-async function loadAdminLeaderboard() {
+async function loadLeaderboard(){
   const tbody = document.getElementById("adminLeaderboard");
-  const totalBox = document.getElementById("totalStakedBox");
-  if (!tbody || !totalBox) return;
-
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
-  totalBox.innerText = "⟳ Loading total staked...";
 
-  const readProvider = provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
   const contract = new ethers.Contract(
     STAKING_CONTRACT,
     [
       "function getAllStakers() view returns (address[])",
       "function getStaked(address user) view returns (uint256)"
     ],
-    readProvider
+    provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
   );
 
   try {
-    const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
-    const decimals = await token.decimals();
-
     const stakers = await contract.getAllStakers();
-    if (!stakers || stakers.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet staking</td></tr>`;
-      totalBox.innerText = "✅ Total Staked: 0 KN";
-      return;
-    }
-
-    let stakerData = [];
-    let total = ethers.BigNumber.from(0);
-
+    adminStakerData = [];
     for (let addr of stakers) {
       const amount = await contract.getStaked(addr);
-      total = total.add(amount);
-      const formatted = ethers.utils.formatUnits(amount, decimals);
-      const raw = parseFloat(formatted);
-      if (raw > 0) {
-        stakerData.push({ addr, amount: raw.toFixed(2), raw });
-      }
+      adminStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
     }
 
-    if (stakerData.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet staking</td></tr>`;
-      totalBox.innerText = "✅ Total Staked: 0 KN";
-      return;
-    }
+    // Default sort by amount (desc)
+    adminStakerData.sort((a, b) => b.amount - a.amount);
 
-    // urutkan desc
-    stakerData.sort((a, b) => b.raw - a.raw);
-
-    // tampilkan total staked
-    totalBox.innerText = `✅ Total Staked: ${ethers.utils.formatUnits(total, decimals)} KN`;
-
-    // render semua staker (bisa batasi top 50 kalau perlu)
-    tbody.innerHTML = "";
-    stakerData.forEach((item, i) => {
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">#${i + 1}</td>
-          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
-          <td class="p-2">${item.amount} KN</td>
-        </tr>`;
-    });
-  } catch (err) {
-    console.error("❌ loadAdminLeaderboard error:", err);
-    tbody.innerHTML =
-      `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
-    totalBox.innerText = "❌ Gagal hitung total staked";
+    renderAdminLeaderboard();
+    log("📊 Leaderboard dimuat");
+  } catch(err){
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
   }
 }
 
-// auto refresh tiap 1 menit
-document.addEventListener("DOMContentLoaded", () => {
-  loadAdminLeaderboard();
-  setInterval(loadAdminLeaderboard, 60000);
-});
-   // -----------------------
-    // BONUS
-    // -----------------------
+function renderAdminLeaderboard(){
+  const tbody = document.getElementById("adminLeaderboard");
+  if (!tbody) return;
+
+  let data = [...adminStakerData];
+
+  // Filter
+  const search = document.getElementById("searchAdmin")?.value.trim().toLowerCase();
+  if (search) {
+    data = data.filter(item => item.addr.toLowerCase().includes(search));
+  }
+
+  // Sort
+  const sort = document.getElementById("sortAdmin")?.value;
+  if (sort === "amount") {
+    data.sort((a, b) => b.amount - a.amount);
+  }
+
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Tidak ada data</td></tr>`;
+    return;
+  }
+
+  data.forEach((item, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td class="p-2">${i+1}</td>
+        <td class="p-2">${item.addr.slice(0,6)}...${item.addr.slice(-4)}</td>
+        <td class="p-2">${item.amount} KN</td>
+      </tr>`;
+  });
+}
+
+// ======================
+// Login
+// ======================
+function doLogin(){
+  const u = document.getElementById("adminUser").value;
+  const p = document.getElementById("adminPass").value;
+  if(u === ADMIN_USER && p === ADMIN_PASS){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("adminPanel").classList.remove("hidden");
+    log("✅ Admin login sukses");
+
+    // Load pertama kali
+    loadLeaderboard();
+
+    // Auto refresh tiap 1 menit
+    clearInterval(refreshInterval);
+    refreshInterval = setInterval(loadLeaderboard, 60 * 1000);
+
+  } else {
+    document.getElementById("loginError").classList.remove("hidden");
+  }
+}
+
+    // ======================
+    // Bonus Reward
+    // ======================
     async function giveBonus(){
       try {
-        if(!signer){ if(window.ethereum) await onConnect(); }
-        if(!signer){ alert("Hubungkan wallet untuk kirim bonus"); return; }
+        if(!window.ethereum){
+          alert("Hubungkan MetaMask untuk kirim bonus");
+          return;
+        }
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+
         const token = new ethers.Contract(
           KN,
-          ["function transfer(address to, uint256 amount) returns (bool)","function decimals() view returns (uint8)"],
+          [
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function decimals() view returns (uint8)"
+          ],
           signer
         );
+
         const addr = document.getElementById("bonusAddress").value;
         const amount = document.getElementById("bonusAmount").value;
         const decimals = await token.decimals();
         const parsed = ethers.utils.parseUnits(amount.toString(), decimals);
+
         const tx = await token.transfer(addr, parsed);
         await tx.wait();
+
         document.getElementById("bonusStatus").innerText = `✅ Bonus terkirim ke ${addr}`;
         log(`🎁 Bonus ${amount} KN dikirim ke ${addr}`);
       } catch(err){
@@ -492,34 +242,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // -----------------------
-    // FAUCET ADMIN
-    // -----------------------
-    async function setFaucetAmount(){
-      try {
-        if(!signer){ await onConnect(); }
-        if(!signer){ alert("Hubungkan wallet dulu"); return; }
-
-        const faucet = new ethers.Contract(FAUCET_CONTRACT, faucetAbi, signer);
-        const newAmount = document.getElementById("faucetAmount").value;
-
-        const decimals = 18; // ganti kalau token faucet punya decimal beda
-        const parsed = ethers.utils.parseUnits(newAmount.toString(), decimals);
-
-        const tx = await faucet.setAmount(parsed);
-        await tx.wait();
-
-        document.getElementById("faucetStatus").innerText = `✅ Faucet amount diubah menjadi ${newAmount} KN`;
-        log(`🚰 Faucet amount diubah: ${newAmount} KN`);
-      } catch(err){
-        console.error(err);
-        document.getElementById("faucetStatus").innerText = "❌ Gagal update faucet";
-      }
-    }
-
-    // -----------------------
-    // Export CSV & Log
-    // -----------------------
+    // ======================
+    // Export CSV
+    // ======================
     function exportCSV(){
       let rows = [["Rank","Wallet","Staked KN"]];
       const trs = document.querySelectorAll("#adminLeaderboard tr");
@@ -536,6 +261,9 @@ document.addEventListener("DOMContentLoaded", () => {
       log("⬇️ Export CSV");
     }
 
+    // ======================
+    // Log
+    // ======================
     function log(msg){
       const li = document.createElement("li");
       li.innerText = new Date().toLocaleTimeString()+" - "+msg;
