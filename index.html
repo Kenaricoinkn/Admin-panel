@@ -9,102 +9,138 @@
 </head>
 <body class="bg-gray-950 text-white font-sans min-h-screen">
 
-  <!-- Navbar -->
-  <header class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold text-yellow-400">KenariCoin Admin</h1>
-
-    <!-- Hamburger (mobile) -->
-    <button id="menuBtn" class="md:hidden text-gray-300 focus:outline-none">☰</button>
-
-    <!-- Nav Menu -->
-    <nav id="menuNav" class="hidden md:flex gap-6 text-sm font-semibold">
-      <a href="#" onclick="showTab('dashboard')" class="hover:text-yellow-400">📊 Dashboard</a>
-      <a href="#" onclick="showTab('leaderboard')" class="hover:text-yellow-400">🏆 Leaderboard</a>
-      <a href="#" onclick="showTab('bonus')" class="hover:text-yellow-400">🎁 Bonus Reward</a>
-      <a href="#" onclick="showTab('log')" class="hover:text-yellow-400">📝 Log Aktivitas</a>
-    </nav>
-
-    <!-- Wallet dropdown -->
-    <div class="relative">
-      <button id="walletBtn" onclick="toggleWalletDropdown()" 
-        class="px-3 py-2 bg-green-600 rounded hover:bg-green-500 text-sm">
-        Connect Wallet
-      </button>
-      <div id="walletDropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded shadow-lg p-3">
-        <button onclick="onConnect()" class="w-full text-left px-3 py-2 hover:bg-gray-700 rounded">🔌 Connect</button>
-        <button onclick="disconnect()" id="disconnectBtn" 
-          class="hidden w-full text-left px-3 py-2 hover:bg-red-600 rounded text-red-400">❌ Disconnect</button>
-        <p id="walletAddress" class="text-xs text-gray-400 mt-2"></p>
-      </div>
+  <!-- LOGIN (tampil jika belum session) -->
+  <section id="loginSection" class="min-h-screen flex items-center justify-center bg-gray-950">
+    <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-sm shadow-lg">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Admin Login</h2>
+      <input id="adminUser" type="text" placeholder="Username" class="w-full p-3 mb-4 rounded bg-gray-800" />
+      <input id="adminPass" type="password" placeholder="Password" class="w-full p-3 mb-4 rounded bg-gray-800" />
+      <button onclick="doLogin()" class="w-full py-3 bg-yellow-400 text-black font-bold rounded">Login</button>
+      <p id="loginError" class="text-red-400 mt-3 text-center hidden">❌ Username atau password salah</p>
+      <p class="mt-4 text-xs text-gray-400">Note: setelah login, halaman tidak akan minta login lagi saat *refresh*. Menutup tab/window akan menghapus session.</p>
     </div>
-  </header>
+  </section>
 
-  <!-- Sections -->
-  <main class="p-6">
-    <!-- Dashboard -->
-    <section id="dashboardSection" class="text-center">
-      <img src="Logo.png" alt="KenariCoin Logo" class="mx-auto w-32 h-32 mb-6">
-      <h2 class="text-3xl font-bold text-yellow-400 mb-4">Welcome to KenariCoin Admin Panel</h2>
-      <p class="text-gray-300 leading-relaxed max-w-xl mx-auto">
-        KenariCoin (KN) adalah token BEP-20 di BNB Smart Chain dengan total supply 500 Triliun. 
-        Sederhana, cepat, dan berbasis komunitas.<br>
-        Gunakan panel ini untuk mengelola staking, memberi bonus reward, dan memantau aktivitas holder.
-      </p>
-    </section>
-
-    <!-- Leaderboard -->
-    <section id="leaderboardSection" class="hidden">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">🏆 Leaderboard Staker</h2>
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
-        <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
-          class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
-          oninput="renderAdminLeaderboard()" />
-
-        <select id="sortAdmin" onchange="renderAdminLeaderboard()"
-          class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
-          <option value="rank">Sort by Rank</option>
-          <option value="amount">Sort by Staked</option>
-        </select>
+  <!-- Main (tampil kalau sudah login) -->
+  <div id="app" class="hidden">
+    <!-- Navbar -->
+    <header class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <h1 class="text-xl font-bold text-yellow-400">KenariCoin Admin</h1>
+        <!-- Logout (opsional manual) -->
+        <button id="logoutBtn" onclick="doLogout()" class="text-sm text-gray-300 hover:text-white hidden md:inline">Logout</button>
       </div>
 
-      <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
-        <thead class="bg-gray-800 text-yellow-400">
-          <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
-        </thead>
-        <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
-          <tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>
-        </tbody>
-      </table>
+      <!-- Hamburger (mobile) -->
+      <button id="menuBtn" class="md:hidden text-gray-300 focus:outline-none">☰</button>
 
-      <button onclick="exportCSV()" 
-        class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
-        ⬇️ Export CSV
-      </button>
-    </section>
+      <!-- Nav Menu -->
+      <nav id="menuNav" class="hidden md:flex gap-6 text-sm font-semibold">
+        <a href="#" onclick="showTab('dashboard'); return false;" class="hover:text-yellow-400">📊 Dashboard</a>
+        <a href="#" onclick="showTab('leaderboard'); return false;" class="hover:text-yellow-400">🏆 Leaderboard</a>
+        <a href="#" onclick="showTab('bonus'); return false;" class="hover:text-yellow-400">🎁 Bonus Reward</a>
+        <a href="#" onclick="showTab('log'); return false;" class="hover:text-yellow-400">📝 Log Aktivitas</a>
+      </nav>
 
-    <!-- Bonus Reward -->
-    <section id="bonusSection" class="hidden">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">🎁 Bonus Reward</h2>
-      <input type="text" id="bonusAddress" placeholder="Wallet Address" 
-        class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-      <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
-        class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-      <button onclick="giveBonus()" 
-        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
-        ✅ Kirim Bonus
-      </button>
-      <p id="bonusStatus" class="mt-2"></p>
-    </section>
+      <!-- Wallet dropdown -->
+      <div class="relative">
+        <button id="walletBtn" onclick="toggleWalletDropdown()" 
+          class="px-3 py-2 bg-green-600 rounded hover:bg-green-500 text-sm">
+          Connect Wallet
+        </button>
+        <div id="walletDropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded shadow-lg p-3 z-50">
+          <button onclick="onConnect()" class="w-full text-left px-3 py-2 hover:bg-gray-700 rounded">🔌 Connect</button>
+          <button onclick="disconnect()" id="disconnectBtn" 
+            class="hidden w-full text-left px-3 py-2 hover:bg-red-600 rounded text-red-400">❌ Disconnect</button>
+          <p id="walletAddress" class="text-xs text-gray-400 mt-2"></p>
+          <hr class="my-2 border-gray-700" />
+          <button onclick="doLogout()" class="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-gray-300">🔒 Logout (end session)</button>
+        </div>
+      </div>
+    </header>
 
-    <!-- Log Aktivitas -->
-    <section id="logSection" class="hidden">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">📝 Log Aktivitas</h2>
-      <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
-    </section>
-  </main>
+    <!-- Sections -->
+    <main class="p-6">
+      <!-- Dashboard -->
+      <section id="dashboardSection" class="text-center">
+        <!-- Logo: pakai logo.png kalau ada, kalau gak ada tampilkan fallback SVG -->
+        <img id="logoImg" src="Logo.png" alt="KenariCoin Logo" class="mx-auto w-32 h-32 mb-6" 
+             onerror="document.getElementById('logoImg').style.display='none'; document.getElementById('logoFallback').style.display='block'">
+        <div id="logoFallback" class="mx-auto mb-6" style="display:none; width:128px; height:128px;">
+          <!-- Simple inline SVG fallback (ganti sesuai selera) -->
+          <svg viewBox="0 0 100 100" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#facc15"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs>
+            <circle cx="50" cy="50" r="48" fill="url(#g)" stroke="#b45309" stroke-width="2"/>
+            <text x="50" y="58" font-size="36" text-anchor="middle" fill="#222" font-weight="700">KN</text>
+          </svg>
+        </div>
+
+        <h2 class="text-3xl font-bold text-yellow-400 mb-4">Welcome to KenariCoin Admin Panel</h2>
+        <p class="text-gray-300 leading-relaxed max-w-xl mx-auto">
+          KenariCoin (KN) adalah token BEP-20 di BNB Smart Chain dengan total supply 500 Triliun.
+          Sederhana, cepat, dan berbasis komunitas.<br>
+          Gunakan panel ini untuk mengelola staking, memberi bonus reward, dan memantau aktivitas holder.
+        </p>
+      </section>
+
+      <!-- Leaderboard -->
+      <section id="leaderboardSection" class="hidden mt-6">
+        <h2 class="text-2xl font-bold text-yellow-400 mb-4">🏆 Leaderboard Staker</h2>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
+          <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
+            class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
+            oninput="renderAdminLeaderboard()" />
+
+          <select id="sortAdmin" onchange="renderAdminLeaderboard()"
+            class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
+            <option value="rank">Sort by Rank</option>
+            <option value="amount">Sort by Staked</option>
+          </select>
+        </div>
+
+        <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
+          <thead class="bg-gray-800 text-yellow-400">
+            <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
+          </thead>
+          <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
+            <tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>
+          </tbody>
+        </table>
+
+        <button onclick="exportCSV()" 
+          class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
+          ⬇️ Export CSV
+        </button>
+      </section>
+
+      <!-- Bonus Reward -->
+      <section id="bonusSection" class="hidden mt-6">
+        <h2 class="text-2xl font-bold text-yellow-400 mb-4">🎁 Bonus Reward</h2>
+        <input type="text" id="bonusAddress" placeholder="Wallet Address" 
+          class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+        <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
+          class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+        <button onclick="giveBonus()" 
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
+          ✅ Kirim Bonus
+        </button>
+        <p id="bonusStatus" class="mt-2"></p>
+      </section>
+
+      <!-- Log Aktivitas -->
+      <section id="logSection" class="hidden mt-6">
+        <h2 class="text-2xl font-bold text-yellow-400 mb-4">📝 Log Aktivitas</h2>
+        <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
+      </section>
+    </main>
+  </div>
 
   <script>
-    // Config
+    // -----------------------
+    // CONFIG & STATE
+    // -----------------------
+    const ADMIN_USER = "devkenari";
+    const ADMIN_PASS = "Snowboy14";
     const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78";
     const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
 
@@ -113,7 +149,57 @@
     let selectedInjectedProvider = null;
     let adminStakerData = [];
 
-    // Hamburger menu
+    // -----------------------
+    // LOGIN (sessionStorage)
+    // -----------------------
+    function doLogin(){
+      const u = document.getElementById("adminUser").value.trim();
+      const p = document.getElementById("adminPass").value.trim();
+      if(u === ADMIN_USER && p === ADMIN_PASS){
+        // simpan session (persist across refresh, cleared when tab/window closed)
+        sessionStorage.setItem('kenariLoggedIn', '1');
+        showAppAfterLogin();
+      } else {
+        const e = document.getElementById("loginError");
+        e.classList.remove('hidden');
+        setTimeout(() => e.classList.add('hidden'), 3000);
+      }
+    }
+
+    function doLogout(){
+      sessionStorage.removeItem('kenariLoggedIn');
+      // optional: also disconnect wallet state (UI only)
+      disconnect();
+      // kembali ke layar login
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+    }
+
+    function showAppAfterLogin(){
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      // default ke dashboard
+      showTab('dashboard');
+      // load leaderboard (async) setelah masuk
+      setTimeout(() => { try{ loadLeaderboard(); }catch(e){} }, 100);
+    }
+
+    // Cek pada load: jika sudah session, langsung tampil app
+    window.addEventListener('DOMContentLoaded', () => {
+      if(sessionStorage.getItem('kenariLoggedIn') === '1'){
+        showAppAfterLogin();
+      } else {
+        // show login
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+      }
+      // inisialisasi UI wallet
+      updateWalletUI(null);
+    });
+
+    // -----------------------
+    // NAVBAR & HAMBURGER
+    // -----------------------
     const menuBtn = document.getElementById("menuBtn");
     const menuNav = document.getElementById("menuNav");
     menuBtn.addEventListener("click", () => {
@@ -128,37 +214,50 @@
       menuNav.classList.toggle("rounded-xl");
     });
 
-    // Tabs
+    function closeMobileMenu(){
+      // hanya tutup kalau layar mobile (lebar < 768)
+      if(window.innerWidth < 768){
+        menuNav.classList.add("hidden");
+        menuNav.classList.remove("flex","flex-col","bg-gray-800","p-4","absolute","top-14","right-4","rounded-xl");
+      }
+      // juga tutup wallet dropdown
+      document.getElementById('walletDropdown').classList.add('hidden');
+    }
+
     function showTab(tab) {
       const sections = ["dashboard","leaderboard","bonus","log"];
       sections.forEach(id => {
         document.getElementById(id+"Section").classList.add("hidden");
       });
       document.getElementById(tab+"Section").classList.remove("hidden");
+      // auto-close mobile menu bila dibuka dari mobile
+      closeMobileMenu();
     }
 
-    // Wallet Dropdown
+    // -----------------------
+    // WALLET UI + CONNECT
+    // -----------------------
     function toggleWalletDropdown() {
       document.getElementById("walletDropdown").classList.toggle("hidden");
     }
 
     function updateWalletUI(address) {
+      const btn = document.getElementById("walletBtn");
       if(address) {
-        document.getElementById("walletBtn").innerText = "Wallet Connected";
-        document.getElementById("walletBtn").classList.remove("bg-green-600","hover:bg-green-500");
-        document.getElementById("walletBtn").classList.add("bg-red-600","hover:bg-red-500");
+        btn.innerText = "Wallet Connected";
+        btn.classList.remove("bg-green-600","hover:bg-green-500");
+        btn.classList.add("bg-red-600","hover:bg-red-500");
         document.getElementById("disconnectBtn").classList.remove("hidden");
         document.getElementById("walletAddress").innerText = address.slice(0,6)+"..."+address.slice(-4);
       } else {
-        document.getElementById("walletBtn").innerText = "Connect Wallet";
-        document.getElementById("walletBtn").classList.add("bg-green-600","hover:bg-green-500");
-        document.getElementById("walletBtn").classList.remove("bg-red-600","hover:bg-red-500");
+        btn.innerText = "Connect Wallet";
+        btn.classList.add("bg-green-600","hover:bg-green-500");
+        btn.classList.remove("bg-red-600","hover:bg-red-500");
         document.getElementById("disconnectBtn").classList.add("hidden");
         document.getElementById("walletAddress").innerText = "";
       }
     }
 
-    // Connect Wallet
     async function onConnect(){
       let providerToUse = window.ethereum || window.okxwallet;
       if(!providerToUse){
@@ -173,12 +272,41 @@
         const address = await signer.getAddress();
         updateWalletUI(address);
         log(`🔌 Wallet connected: ${address}`);
+
+        // listen changes
+        if(selectedInjectedProvider && selectedInjectedProvider.on){
+          selectedInjectedProvider.on('accountsChanged', handleAccountsChanged);
+          selectedInjectedProvider.on('chainChanged', handleChainChanged);
+        }
       } catch(err){
         alert('Gagal connect: '+(err?.message||err));
       }
     }
 
+    function handleAccountsChanged(accounts){
+      if(!accounts || accounts.length === 0){
+        disconnect();
+      } else {
+        const a = accounts[0];
+        updateWalletUI(a);
+        log('🧾 accountsChanged: ' + a);
+      }
+    }
+
+    function handleChainChanged(chainId){
+      log('🔁 chainChanged: ' + chainId);
+      if(web3Provider){
+        web3Provider.getNetwork().then(n => {
+          log('🔗 network: ' + n.chainId);
+        });
+      }
+    }
+
     function disconnect(){
+      if(selectedInjectedProvider && selectedInjectedProvider.removeListener){
+        try{ selectedInjectedProvider.removeListener('accountsChanged', handleAccountsChanged); }catch(e){}
+        try{ selectedInjectedProvider.removeListener('chainChanged', handleChainChanged); }catch(e){}
+      }
       web3Provider = null;
       signer = null;
       selectedInjectedProvider = null;
@@ -186,18 +314,21 @@
       log('🔌 Wallet disconnected');
     }
 
-    // Leaderboard
+    // -----------------------
+    // LEADERBOARD
+    // -----------------------
     async function loadLeaderboard(){
       const tbody = document.getElementById("adminLeaderboard");
       tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
 
+      const providerForRead = web3Provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org");
       const contract = new ethers.Contract(
         STAKING_CONTRACT,
         [
           "function getAllStakers() view returns (address[])",
           "function getStaked(address user) view returns (uint256)"
         ],
-        web3Provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
+        providerForRead
       );
 
       try {
@@ -205,12 +336,14 @@
         adminStakerData = [];
         for (let addr of stakers) {
           const amount = await contract.getStaked(addr);
+          // NOTE: adjust decimals if staking contract uses different decimals
           adminStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
         }
         adminStakerData.sort((a, b) => b.amount - a.amount);
         renderAdminLeaderboard();
         log("📊 Leaderboard dimuat");
       } catch(err){
+        console.error(err);
         tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
       }
     }
@@ -233,7 +366,9 @@
       });
     }
 
-    // Bonus Reward
+    // -----------------------
+    // BONUS
+    // -----------------------
     async function giveBonus(){
       try {
         if(!signer){ if(window.ethereum) await onConnect(); }
@@ -252,11 +387,14 @@
         document.getElementById("bonusStatus").innerText = `✅ Bonus terkirim ke ${addr}`;
         log(`🎁 Bonus ${amount} KN dikirim ke ${addr}`);
       } catch(err){
+        console.error(err);
         document.getElementById("bonusStatus").innerText = "❌ Gagal kirim bonus";
       }
     }
 
-    // Export CSV
+    // -----------------------
+    // Export CSV & Log
+    // -----------------------
     function exportCSV(){
       let rows = [["Rank","Wallet","Staked KN"]];
       const trs = document.querySelectorAll("#adminLeaderboard tr");
@@ -264,7 +402,7 @@
         let cols = [...tr.querySelectorAll("td")].map(td => td.innerText);
         if(cols.length) rows.push(cols);
       });
-      let csv = rows.map(r => r.join(",")).join("\\n");
+      let csv = rows.map(r => r.join(",")).join("\n");
       let blob = new Blob([csv], { type: "text/csv" });
       let link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -273,17 +411,11 @@
       log("⬇️ Export CSV");
     }
 
-    // Log
     function log(msg){
       const li = document.createElement("li");
       li.innerText = new Date().toLocaleTimeString()+" - "+msg;
       document.getElementById("logList").appendChild(li);
     }
-
-    // Auto-load leaderboard
-    window.addEventListener('load', () => {
-      try{ loadLeaderboard(); }catch(e){}
-    });
   </script>
 
 </body>
