@@ -241,16 +241,13 @@ function doLogin() {
     showAppAfterLogin();
   } else {
     const e = document.getElementById("loginError");
-    if (e) {
-      e.classList.remove("hidden");
-      setTimeout(() => e.classList.add("hidden"), 3000);
-    }
+    e.classList.remove("hidden");
+    setTimeout(() => e.classList.add("hidden"), 3000);
   }
 }
 
 function doLogout() {
   sessionStorage.removeItem("kenariLoggedIn");
-  disconnect(); // fungsi disconnect wallet kamu
   document.getElementById("app").classList.add("hidden");
   document.getElementById("loginSection").classList.remove("hidden");
 }
@@ -258,10 +255,14 @@ function doLogout() {
 function showAppAfterLogin() {
   document.getElementById("loginSection").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
-  // kalau ada fungsi showTab, panggil. kalau tidak, skip
+
+  // aman → kalau ada showTab panggil, kalau gak ada di-skip
   try { showTab("dashboard"); } catch(e) {}
+
+  // aman → leaderboard admin
   try { loadAdminLeaderboard(); } catch(e) {}
 }
+
 window.addEventListener("DOMContentLoaded", () => {
   if (sessionStorage.getItem("kenariLoggedIn") === "1") {
     showAppAfterLogin();
@@ -269,7 +270,6 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("loginSection").classList.remove("hidden");
     document.getElementById("app").classList.add("hidden");
   }
-  updateWalletUI(null); // inisialisasi UI wallet
 });
     // -----------------------
     // NAVBAR & HAMBURGER
