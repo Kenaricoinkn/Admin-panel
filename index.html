@@ -385,26 +385,23 @@ let provider = null, signer = null, userAddress = null;
       updateWalletUI(null);
       log('🔌 Wallet disconnected');
     }
-
-// ===== Admin Leaderboard =====
+=========LEADERBOARD=======
 async function loadAdminLeaderboard() {
   const tbody = document.getElementById("adminLeaderboard");
   const totalBox = document.getElementById("totalStakedBox");
   if (!tbody || !totalBox) return;
 
-  // spinner awal
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
   totalBox.innerText = "⟳ Loading total staked...";
 
   try {
     const readProvider = provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
-
     const staking = new ethers.Contract(STAKING_CONTRACT, LEADERBOARD_ABI, readProvider);
     const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
     const decimals = await token.decimals();
 
     const stakers = await staking.getAllStakers();
-    if (!stakers || stakers.length === 0) {
+    if (!stakers.length) {
       tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada wallet staking</td></tr>`;
       totalBox.innerText = "✅ Total Staked: 0 KN";
       return;
@@ -417,27 +414,19 @@ async function loadAdminLeaderboard() {
       const amount = await staking.getStaked(addr);
       total = total.add(amount);
       const parsed = parseFloat(ethers.utils.formatUnits(amount, decimals));
-      if (parsed > 0) {
-        stakerData.push({ addr, amount: parsed });
-      }
+      if (parsed > 0) stakerData.push({ addr, amount: parsed });
     }
 
-    // sort desc
     stakerData.sort((a, b) => b.amount - a.amount);
 
-    // total staked
     totalBox.innerText = `✅ Total Staked: ${ethers.utils.formatUnits(total, decimals)} KN`;
 
-    // render table
-    tbody.innerHTML = "";
-    stakerData.forEach((s, i) => {
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">${i + 1}</td>
-          <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
-          <td class="p-2">${s.amount.toFixed(2)} KN</td>
-        </tr>`;
-    });
+    tbody.innerHTML = stakerData.map((s, i) => `
+      <tr>
+        <td class="p-2">${i + 1}</td>
+        <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
+        <td class="p-2">${s.amount.toFixed(2)} KN</td>
+      </tr>`).join("");
   } catch (err) {
     console.error("❌ loadAdminLeaderboard error:", err);
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
@@ -445,10 +434,9 @@ async function loadAdminLeaderboard() {
   }
 }
 
-// auto refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
   loadAdminLeaderboard();
-  setInterval(loadAdminLeaderboard, 60 * 1000);
+  setInterval(loadAdminLeaderboard, 60000);
 });
    // -----------------------
     // BONUS
