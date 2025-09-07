@@ -397,14 +397,15 @@ const faucetAbi = [
       log('🔌 Wallet disconnected');
     }
 
- // -----------------------
-// LEADERBOARD (BSC TESTNET) — cepat & robust
 // -----------------------
-async function loadLeaderboard(){
+// ADMIN LEADERBOARD
+// -----------------------
+async function loadAdminLeaderboard() {
   const tbody = document.getElementById("adminLeaderboard");
   const totalBox = document.getElementById("totalStakedBox");
+  if (!tbody) return;
 
-  // Spinner
+  // Spinner awal
   tbody.innerHTML = `
     <tr>
       <td colspan="3" class="p-3 text-center">
@@ -426,54 +427,70 @@ async function loadLeaderboard(){
       Loading total staked...
     </div>`;
 
-  // Provider testnet (utama + backup)
-  let providerForRead;
   try {
-    providerForRead = web3Provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545/");
-  } catch {
-    providerForRead = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
-  }
+    // provider testnet
+    const readProvider = web3Provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
 
-  const contract = new ethers.Contract(STAKING_CONTRACT, stakingAbi, providerForRead);
+    // kontrak staking khusus leaderboard
+    const contract = new ethers.Contract(
+      STAKING_CONTRACT,
+      [
+        "function getAllStakers() view returns (address[])",
+        "function getStaked(address user) view returns (uint256)"
+      ],
+      readProvider
+    );
 
-  try {
-    const stakers = await contract.getAllStakers(); // ada di ABI kamu
+    // kontrak token untuk ambil decimals
+    const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
+    const decimals = await token.decimals();
+
+    const stakers = await contract.getAllStakers();
     if (!stakers || stakers.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">Belum ada staker</td></tr>`;
-      totalBox.innerText = `✅ Total Staked: 0 KN`;
-      adminStakerData = [];
-      renderAdminLeaderboard();
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada staker</td></tr>`;
+      totalBox.innerText = "✅ Total Staked: 0 KN";
       return;
     }
 
-    // Ambil stake tiap alamat secara paralel
-    const stakesBn = await Promise.all(stakers.map(a => contract.getStaked(a)));
+    // ambil semua stake paralel
+    const stakes = await Promise.all(stakers.map(addr => contract.getStaked(addr)));
 
-    // Hitung total + siapkan data
     let total = ethers.BigNumber.from(0);
-    adminStakerData = stakers.map((addr, i) => {
-      const bn = stakesBn[i];
-      total = total.add(bn);
-      return { addr, amount: parseFloat(ethers.utils.formatUnits(bn, 6)) }; // KN decimals = 6
+    let stakerData = stakers.map((addr, i) => {
+      const amt = stakes[i];
+      total = total.add(amt);
+      return { addr, raw: parseFloat(ethers.utils.formatUnits(amt, decimals)) };
     });
 
-    // Filter yang 0 (opsional), lalu sort desc
-    adminStakerData = adminStakerData.filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount);
+    // filter > 0, sort desc
+    stakerData = stakerData.filter(s => s.raw > 0).sort((a, b) => b.raw - a.raw);
 
-    // Update UI total
-    const totalParsed = ethers.utils.formatUnits(total, 6);
+    // update total
+    const totalParsed = ethers.utils.formatUnits(total, decimals);
     totalBox.innerText = `✅ Total Staked: ${totalParsed} KN`;
 
-    // Render tabel
-    renderAdminLeaderboard();
-    log("📊 Leaderboard dimuat (testnet)");
-  } catch(err){
-    console.error("❌ Gagal load leaderboard:", err);
-    alert("Error load leaderboard: " + (err?.message || err));
+    // render tabel
+    tbody.innerHTML = "";
+    stakerData.forEach((s, i) => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">${i+1}</td>
+          <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
+          <td class="p-2">${s.raw.toFixed(2)} KN</td>
+        </tr>`;
+    });
+  } catch (err) {
+    console.error("❌ loadAdminLeaderboard error:", err);
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
     totalBox.innerText = "❌ Gagal hitung total staked";
   }
 }
+
+// auto refresh tiap 1 menit
+document.addEventListener("DOMContentLoaded", () => {
+  loadAdminLeaderboard();
+  setInterval(loadAdminLeaderboard, 60 * 1000);
+});
    // -----------------------
     // BONUS
     // -----------------------
