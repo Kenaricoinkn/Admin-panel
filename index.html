@@ -10,16 +10,26 @@
 <body class="bg-gray-950 text-white font-sans min-h-screen">
 
   <!-- LOGIN (tampil jika belum session) -->
-  <section id="loginSection" class="min-h-screen flex items-center justify-center bg-gray-950">
-    <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-sm shadow-lg">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Admin Login</h2>
-      <input id="adminUser" type="text" placeholder="Username" class="w-full p-3 mb-4 rounded bg-gray-800" />
-      <input id="adminPass" type="password" placeholder="Password" class="w-full p-3 mb-4 rounded bg-gray-800" />
-      <button onclick="doLogin()" class="w-full py-3 bg-yellow-400 text-black font-bold rounded">Login</button>
-      <p id="loginError" class="text-red-400 mt-3 text-center hidden">❌ Username atau password salah</p>
-      <p class="mt-4 text-xs text-gray-400">Note: setelah login, halaman tidak akan minta login lagi saat *refresh*. Menutup tab/window akan menghapus session.</p>
+<section id="loginSection" class="mt-6">
+  <h2 class="text-2xl font-bold text-yellow-400 mb-4">🔑 Admin Login</h2>
+
+  <div class="flex flex-col gap-3 max-w-sm">
+    <input id="adminUser" type="text" placeholder="Username"
+      class="p-2 rounded bg-gray-700 text-white border border-gray-600" />
+
+    <input id="adminPass" type="password" placeholder="Password"
+      class="p-2 rounded bg-gray-700 text-white border border-gray-600" />
+
+    <button onclick="doLogin()"
+      class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500">
+      🔓 Login
+    </button>
+
+    <div id="loginError" class="text-sm text-red-400 hidden">
+      ❌ Username / password salah!
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- Main (tampil kalau sudah login) -->
   <div id="app" class="hidden">
