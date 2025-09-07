@@ -256,12 +256,13 @@ function doLogout() {
 }
 
 function showAppAfterLogin() {
+function showAppAfterLogin() {
   document.getElementById("loginSection").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
-  showTab("dashboard");
-  setTimeout(() => { try { loadAdminLeaderboard(); } catch(e){} }, 100);
+  // kalau ada fungsi showTab, panggil. kalau tidak, skip
+  try { showTab("dashboard"); } catch(e) {}
+  try { loadAdminLeaderboard(); } catch(e) {}
 }
-
 window.addEventListener("DOMContentLoaded", () => {
   if (sessionStorage.getItem("kenariLoggedIn") === "1") {
     showAppAfterLogin();
