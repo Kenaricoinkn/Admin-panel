@@ -10,23 +10,25 @@
 <body class="bg-gray-950 text-white font-sans min-h-screen">
 
   <!-- LOGIN (tampil jika belum session) -->
-<section id="loginSection" class="mt-6">
-  <h2 class="text-2xl font-bold text-yellow-400 mb-4">🔑 Admin Login</h2>
+<section id="loginSection" class="flex items-center justify-center min-h-screen bg-gray-900">
+  <div class="bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+    <h2 class="text-2xl font-bold text-yellow-400 mb-6">🔑 Admin Login</h2>
 
-  <div class="flex flex-col gap-3 max-w-sm">
-    <input id="adminUser" type="text" placeholder="Username"
-      class="p-2 rounded bg-gray-700 text-white border border-gray-600" />
+    <div class="flex flex-col gap-4">
+      <input id="adminUser" type="text" placeholder="Username"
+        class="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
 
-    <input id="adminPass" type="password" placeholder="Password"
-      class="p-2 rounded bg-gray-700 text-white border border-gray-600" />
+      <input id="adminPass" type="password" placeholder="Password"
+        class="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
 
-    <button onclick="doLogin()"
-      class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500">
-      🔓 Login
-    </button>
+      <button onclick="doLogin()"
+        class="px-4 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-500 transition">
+        🔓 Login
+      </button>
 
-    <div id="loginError" class="text-sm text-red-400 hidden">
-      ❌ Username / password salah!
+      <div id="loginError" class="text-sm text-red-400 hidden">
+        ❌ Username / password salah!
+      </div>
     </div>
   </div>
 </section>
@@ -185,13 +187,6 @@
 
   <script>
 // -----------------------
-// ADMIN LOGIN CONFIG
-// -----------------------
-const ADMIN_USER = "devkenari";   // username untuk login admin (dummy)
-const ADMIN_PASS = "Snowboy14";   // password untuk login admin (dummy)
-
-
-// -----------------------
 // BLOCKCHAIN CONFIG
 // -----------------------
 let KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";   // token KN
@@ -232,53 +227,50 @@ const ADMIN_ABI = [
 let provider = null, signer = null, userAddress = null;
 
     // -----------------------
-    // LOGIN (sessionStorage)
-    // -----------------------
-    function doLogin(){
-      const u = document.getElementById("adminUser").value.trim();
-      const p = document.getElementById("adminPass").value.trim();
-      if(u === ADMIN_USER && p === ADMIN_PASS){
-        // simpan session (persist across refresh, cleared when tab/window closed)
-        sessionStorage.setItem('kenariLoggedIn', '1');
-        showAppAfterLogin();
-      } else {
-        const e = document.getElementById("loginError");
-        e.classList.remove('hidden');
-        setTimeout(() => e.classList.add('hidden'), 3000);
-      }
+// LOGIN (sessionStorage)
+// -----------------------
+const ADMIN_USER = "devkenari";
+const ADMIN_PASS = "Snowboy14";
+
+function doLogin() {
+  const u = document.getElementById("adminUser").value.trim();
+  const p = document.getElementById("adminPass").value.trim();
+
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    sessionStorage.setItem("kenariLoggedIn", "1");
+    showAppAfterLogin();
+  } else {
+    const e = document.getElementById("loginError");
+    if (e) {
+      e.classList.remove("hidden");
+      setTimeout(() => e.classList.add("hidden"), 3000);
     }
+  }
+}
 
-    function doLogout(){
-      sessionStorage.removeItem('kenariLoggedIn');
-      // optional: also disconnect wallet state (UI only)
-      disconnect();
-      // kembali ke layar login
-      document.getElementById('app').classList.add('hidden');
-      document.getElementById('loginSection').classList.remove('hidden');
-    }
+function doLogout() {
+  sessionStorage.removeItem("kenariLoggedIn");
+  disconnect(); // fungsi disconnect wallet kamu
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("loginSection").classList.remove("hidden");
+}
 
-    function showAppAfterLogin(){
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      // default ke dashboard
-      showTab('dashboard');
-      // load leaderboard (async) setelah masuk
-      setTimeout(() => { try{ loadLeaderboard(); }catch(e){} }, 100);
-    }
+function showAppAfterLogin() {
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  showTab("dashboard");
+  setTimeout(() => { try { loadAdminLeaderboard(); } catch(e){} }, 100);
+}
 
-    // Cek pada load: jika sudah session, langsung tampil app
-    window.addEventListener('DOMContentLoaded', () => {
-      if(sessionStorage.getItem('kenariLoggedIn') === '1'){
-        showAppAfterLogin();
-      } else {
-        // show login
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('app').classList.add('hidden');
-      }
-      // inisialisasi UI wallet
-      updateWalletUI(null);
-    });
-
+window.addEventListener("DOMContentLoaded", () => {
+  if (sessionStorage.getItem("kenariLoggedIn") === "1") {
+    showAppAfterLogin();
+  } else {
+    document.getElementById("loginSection").classList.remove("hidden");
+    document.getElementById("app").classList.add("hidden");
+  }
+  updateWalletUI(null); // inisialisasi UI wallet
+});
     // -----------------------
     // NAVBAR & HAMBURGER
     // -----------------------
