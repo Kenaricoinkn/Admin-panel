@@ -114,18 +114,34 @@
       </section>
 
       <!-- Bonus Reward -->
-      <section id="bonusSection" class="hidden mt-6">
-        <h2 class="text-2xl font-bold text-yellow-400 mb-4">🎁 Bonus Reward</h2>
-        <input type="text" id="bonusAddress" placeholder="Wallet Address" 
-          class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-        <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
-          class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-        <button onclick="giveBonus()" 
-          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
-          ✅ Kirim Bonus
-        </button>
-        <p id="bonusStatus" class="mt-2"></p>
-      </section>
+<section id="bonusSection" class="hidden mt-6">
+  <h2 class="text-2xl font-bold text-yellow-400 mb-4">🎁 Bonus Reward</h2>
+
+  <!-- Kirim Bonus -->
+  <div class="mb-6">
+    <input type="text" id="bonusAddress" placeholder="Wallet Address" 
+      class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+    <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
+      class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+    <button onclick="giveBonus()" 
+      class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
+      ✅ Kirim Bonus
+    </button>
+    <p id="bonusStatus" class="mt-2 text-sm text-gray-300"></p>
+  </div>
+
+  <!-- Atur Faucet -->
+  <div class="bg-gray-800 p-4 rounded-xl">
+    <h3 class="text-lg font-semibold mb-3">🚰 Atur Faucet</h3>
+    <input type="number" id="faucetAmount" placeholder="Jumlah token per klaim" 
+      class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+    <button onclick="setFaucetAmount()" 
+      class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
+      ⚙️ Update Faucet Amount
+    </button>
+    <p id="faucetStatus" class="mt-2 text-sm text-gray-300"></p>
+  </div>
+</section>
 
       <!-- Log Aktivitas -->
       <section id="logSection" class="hidden mt-6">
@@ -137,17 +153,36 @@
 
   <script>
     // -----------------------
-    // CONFIG & STATE
-    // -----------------------
-    const ADMIN_USER = "devkenari";
-    const ADMIN_PASS = "Snowboy14";
-    const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78";
-    const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
+// CONFIG & STATE
+// -----------------------
+const ADMIN_USER = "devkenari";
+const ADMIN_PASS = "Snowboy14";
+const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78";
+const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
 
-    let web3Provider = null;
-    let signer = null;
-    let selectedInjectedProvider = null;
-    let adminStakerData = [];
+let web3Provider = null;
+let signer = null;
+let selectedInjectedProvider = null;
+let adminStakerData = [];
+
+// Faucet config
+const FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";
+const faucetAbi = [
+  {
+    "inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],
+    "name":"setAmount",
+    "outputs":[],
+    "stateMutability":"nonpayable",
+    "type":"function"
+  },
+  {
+    "inputs":[],
+    "name":"amount",
+    "outputs":[{"internalType":"uint256","name":"","type":"uint256"}],
+    "stateMutability":"view",
+    "type":"function"
+  }
+];
 
     // -----------------------
     // LOGIN (sessionStorage)
@@ -366,7 +401,7 @@
       });
     }
 
-    // -----------------------
+   // -----------------------
     // BONUS
     // -----------------------
     async function giveBonus(){
@@ -389,6 +424,31 @@
       } catch(err){
         console.error(err);
         document.getElementById("bonusStatus").innerText = "❌ Gagal kirim bonus";
+      }
+    }
+
+    // -----------------------
+    // FAUCET ADMIN
+    // -----------------------
+    async function setFaucetAmount(){
+      try {
+        if(!signer){ await onConnect(); }
+        if(!signer){ alert("Hubungkan wallet dulu"); return; }
+
+        const faucet = new ethers.Contract(FAUCET_CONTRACT, faucetAbi, signer);
+        const newAmount = document.getElementById("faucetAmount").value;
+
+        const decimals = 18; // ganti kalau token faucet punya decimal beda
+        const parsed = ethers.utils.parseUnits(newAmount.toString(), decimals);
+
+        const tx = await faucet.setAmount(parsed);
+        await tx.wait();
+
+        document.getElementById("faucetStatus").innerText = `✅ Faucet amount diubah menjadi ${newAmount} KN`;
+        log(`🚰 Faucet amount diubah: ${newAmount} KN`);
+      } catch(err){
+        console.error(err);
+        document.getElementById("faucetStatus").innerText = "❌ Gagal update faucet";
       }
     }
 
