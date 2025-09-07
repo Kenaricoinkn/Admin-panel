@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KenariCoin Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 </head>
-<body class="bg-gray-900 text-white font-sans">
-
-  <!-- Login Page -->
-  <section id="loginPage" class="h-screen flex items-center justify-center">
+<body class="bg-gray-900 text-white font-sans">  <!-- Login Page -->  <section id="loginPage" class="h-screen flex items-center justify-center">
     <div class="bg-gray-800 p-8 rounded-xl shadow w-96">
       <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Admin Login</h2>
       <input type="text" id="adminUser" placeholder="Username" 
@@ -23,66 +19,62 @@
       </button>
       <p id="loginError" class="text-red-400 mt-3 hidden">❌ Username atau Password salah</p>
     </div>
-  </section>
+  </section>  <!-- Admin Panel -->  <section id="adminPanel" class="hidden p-6">
+    <h2 class="text-3xl font-bold text-yellow-400 mb-6">📊 KenariCoin Admin Panel</h2><!-- Wallet Connect -->
+<div class="mb-6 bg-gray-800 p-4 rounded-xl">
+  <h3 class="text-lg font-semibold mb-2">🔌 Connect Wallet</h3>
+  <div class="flex gap-2 items-center">
+    <select id="providerSelect" class="p-2 rounded bg-gray-700 text-white">
+      <option value="">-- Detected Providers --</option>
+    </select>
+    <button id="btnDetect" class="px-3 py-2 bg-blue-600 rounded" onclick="detectProviders()">Detect</button>
+    <button id="btnConnect" class="px-3 py-2 bg-green-600 rounded" onclick="onConnect()">Connect</button>
+    <button id="btnDisconnect" class="px-3 py-2 bg-red-600 rounded hidden" onclick="disconnect()">Disconnect</button>
+  </div>
+  <p id="connectedInfo" class="mt-3 text-sm text-gray-300">Not connected</p>
+</div>
 
-  <!-- Admin Panel -->
-  <section id="adminPanel" class="hidden p-6">
-    <h2 class="text-3xl font-bold text-yellow-400 mb-6">📊 KenariCoin Admin Panel</h2>
-
-   <!-- Leaderboard -->
-<div class="mb-8">
-  <h3 class="text-xl font-semibold mb-3">🏆 Leaderboard Staker</h3>
-
-  <!-- Filter & Sort Controls -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
+   <!-- Leaderboard --><div class="mb-8">
+  <h3 class="text-xl font-semibold mb-3">🏆 Leaderboard Staker</h3>  <!-- Filter & Sort Controls -->  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
     <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
            class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
-           oninput="renderAdminLeaderboard()" />
+           oninput="renderAdminLeaderboard()" /><select id="sortAdmin" onchange="renderAdminLeaderboard()"
+        class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
+  <option value="rank">Sort by Rank</option>
+  <option value="amount">Sort by Staked</option>
+</select>
 
-    <select id="sortAdmin" onchange="renderAdminLeaderboard()"
-            class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
-      <option value="rank">Sort by Rank</option>
-      <option value="amount">Sort by Staked</option>
-    </select>
-  </div>
-
-  <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
+  </div>  <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
     <thead class="bg-gray-800 text-yellow-400">
       <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
     </thead>
     <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
       <tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>
     </tbody>
-  </table>
+  </table><button onclick="exportCSV()" 
+class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400"> ⬇️ Export CSV </button>
 
-  <button onclick="exportCSV()" 
-          class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
-    ⬇️ Export CSV
+</div><!-- Bonus -->
+<div class="mb-8">
+  <h3 class="text-xl font-semibold mb-3">🎁 Bonus Reward</h3>
+  <input type="text" id="bonusAddress" placeholder="Wallet Address" 
+         class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+  <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
+         class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
+  <button onclick="giveBonus()" 
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
+    ✅ Kirim Bonus
   </button>
+  <p id="bonusStatus" class="mt-2"></p>
 </div>
 
-    <!-- Bonus -->
-    <div class="mb-8">
-      <h3 class="text-xl font-semibold mb-3">🎁 Bonus Reward</h3>
-      <input type="text" id="bonusAddress" placeholder="Wallet Address" 
-             class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-      <input type="number" id="bonusAmount" placeholder="Jumlah KN" 
-             class="w-full p-3 mb-3 rounded bg-gray-700 text-white"/>
-      <button onclick="giveBonus()" 
-              class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400">
-        ✅ Kirim Bonus
-      </button>
-      <p id="bonusStatus" class="mt-2"></p>
-    </div>
+<!-- Log -->
+<div>
+  <h3 class="text-xl font-semibold mb-3">📝 Log Aktivitas</h3>
+  <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
+</div>
 
-    <!-- Log -->
-    <div>
-      <h3 class="text-xl font-semibold mb-3">📝 Log Aktivitas</h3>
-      <ul id="logList" class="list-disc pl-5 text-gray-300"></ul>
-    </div>
-  </section>
-
-  <script>
+  </section>  <script>
     // ======================
     // Konfigurasi Admin
     // ======================
@@ -90,7 +82,11 @@
     const ADMIN_PASS = "Snowboy14";
     const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78"; // ganti dgn kontrak
     const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8"; // ganti dgn kontrak token
-    let provider, signer;
+
+    // Web3 state
+    let web3Provider = null; // ethers provider (Web3Provider)
+    let signer = null;       // ethers signer
+    let selectedInjectedProvider = null; // raw injected provider object
 
     // ======================
     // Login
@@ -109,113 +105,232 @@
     }
 
     // ======================
-    // Leaderboard
+    // Provider Detection + Connect
     // ======================
-    let adminStakerData = [];
-let refreshInterval;
-
-async function loadLeaderboard(){
-  const tbody = document.getElementById("adminLeaderboard");
-  tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
-
-  const contract = new ethers.Contract(
-    STAKING_CONTRACT,
-    [
-      "function getAllStakers() view returns (address[])",
-      "function getStaked(address user) view returns (uint256)"
-    ],
-    provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
-  );
-
-  try {
-    const stakers = await contract.getAllStakers();
-    adminStakerData = [];
-    for (let addr of stakers) {
-      const amount = await contract.getStaked(addr);
-      adminStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+    function prettyAddress(a){
+      if(!a) return "";
+      return a.slice(0,6) + "..." + a.slice(-4);
     }
 
-    // Default sort by amount (desc)
-    adminStakerData.sort((a, b) => b.amount - a.amount);
+    function detectProviders(){
+      const select = document.getElementById('providerSelect');
+      select.innerHTML = '<option value="">-- Detected Providers --</option>';
+      const detected = [];
 
-    renderAdminLeaderboard();
-    log("📊 Leaderboard dimuat");
-  } catch(err){
-    console.error(err);
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
-  }
-}
+      // Common pattern: window.ethereum
+      if(window.ethereum){
+        // some wallets inject window.ethereum.providers (multiple providers)
+        if(Array.isArray(window.ethereum.providers)){
+          window.ethereum.providers.forEach((p, idx) => {
+            const name = p.isMetaMask ? 'MetaMask' : (p.isOKXWallet || p.isOkxWallet ? 'OKX Wallet' : (p.isCoinbaseWallet ? 'Coinbase' : 'Injected-' + (idx+1)));
+            detected.push({name, provider: p});
+          });
+        } else {
+          const p = window.ethereum;
+          const name = p.isMetaMask ? 'MetaMask' : (p.isOKXWallet || p.isOkxWallet ? 'OKX Wallet' : (p.isCoinbaseWallet ? 'Coinbase' : 'Injected'));
+          detected.push({name, provider: p});
+        }
+      }
 
-function renderAdminLeaderboard(){
-  const tbody = document.getElementById("adminLeaderboard");
-  if (!tbody) return;
+      // Some wallets expose custom globals (OKX Wallet sometimes exposes window.okxwallet)
+      if(window.okxwallet){
+        detected.push({name: 'OKX Wallet (okxwallet)', provider: window.okxwallet});
+      }
 
-  let data = [...adminStakerData];
+      // Add other heuristics if needed (Trust, TokenPocket, etc.)
+      if(window.trustwallet) detected.push({name:'TrustWallet', provider: window.trustwallet});
 
-  // Filter
-  const search = document.getElementById("searchAdmin")?.value.trim().toLowerCase();
-  if (search) {
-    data = data.filter(item => item.addr.toLowerCase().includes(search));
-  }
+      // Fill select
+      if(detected.length === 0){
+        select.innerHTML += '<option value="none">(No injected wallets found)</option>';
+        document.getElementById('connectedInfo').innerText = 'No injected wallet detected. You can use MetaMask/OKX extension or install them.';
+        return detected;
+      }
 
-  // Sort
-  const sort = document.getElementById("sortAdmin")?.value;
-  if (sort === "amount") {
-    data.sort((a, b) => b.amount - a.amount);
-  }
+      detected.forEach((d, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.dataset.name = d.name;
+        opt.innerText = d.name;
+        select.appendChild(opt);
+      });
 
-  tbody.innerHTML = "";
+      // store detected list on select element for later
+      select.detected = detected;
+      document.getElementById('connectedInfo').innerText = 'Detected: ' + detected.map(d=>d.name).join(', ');
+      return detected;
+    }
 
-  if (data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Tidak ada data</td></tr>`;
-    return;
-  }
+    async function onConnect(){
+      const select = document.getElementById('providerSelect');
+      let providerToUse = null;
 
-  data.forEach((item, i) => {
-    tbody.innerHTML += `
-      <tr>
-        <td class="p-2">${i+1}</td>
-        <td class="p-2">${item.addr.slice(0,6)}...${item.addr.slice(-4)}</td>
-        <td class="p-2">${item.amount} KN</td>
-      </tr>`;
-  });
-}
+      // If user selected a detected provider
+      if(select && select.value !== '' && select.value !== 'none'){
+        const detected = select.detected || detectProviders();
+        providerToUse = detected[parseInt(select.value)]?.provider;
+      }
 
-// ======================
-// Login
-// ======================
-function doLogin(){
-  const u = document.getElementById("adminUser").value;
-  const p = document.getElementById("adminPass").value;
-  if(u === ADMIN_USER && p === ADMIN_PASS){
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("adminPanel").classList.remove("hidden");
-    log("✅ Admin login sukses");
+      // Fallback to window.ethereum
+      if(!providerToUse && window.ethereum) providerToUse = window.ethereum;
+      if(!providerToUse && window.okxwallet) providerToUse = window.okxwallet;
 
-    // Load pertama kali
-    loadLeaderboard();
+      if(!providerToUse){
+        alert('No injected wallet found. Please install MetaMask or OKX Wallet extension.');
+        return;
+      }
 
-    // Auto refresh tiap 1 menit
-    clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadLeaderboard, 60 * 1000);
+      try{
+        // Save raw provider for potential later use
+        selectedInjectedProvider = providerToUse;
 
-  } else {
-    document.getElementById("loginError").classList.remove("hidden");
-  }
-}
+        // Use ethers Web3Provider wrapper
+        web3Provider = new ethers.providers.Web3Provider(providerToUse, 'any');
+
+        // Request accounts (triggers extension popup)
+        await web3Provider.send('eth_requestAccounts', []);
+
+        signer = web3Provider.getSigner();
+        const address = await signer.getAddress();
+        const network = await web3Provider.getNetwork();
+
+        document.getElementById('connectedInfo').innerText = `Connected: ${prettyAddress(address)}  (chainId: ${network.chainId})`;
+        document.getElementById('btnDisconnect').classList.remove('hidden');
+        document.getElementById('btnConnect').classList.add('hidden');
+        log(`🔌 Wallet connected: ${address}`);
+
+        // Optional: listen for account or chain change
+        if(selectedInjectedProvider && selectedInjectedProvider.on){
+          selectedInjectedProvider.on('accountsChanged', handleAccountsChanged);
+          selectedInjectedProvider.on('chainChanged', handleChainChanged);
+        }
+
+      } catch(err){
+        console.error('connect error', err);
+        alert('Gagal connect: ' + (err?.message || err));
+      }
+    }
+
+    function handleAccountsChanged(accounts){
+      if(!accounts || accounts.length === 0){
+        disconnect();
+      } else {
+        const a = accounts[0];
+        document.getElementById('connectedInfo').innerText = `Connected: ${prettyAddress(a)}`;
+        log('🧾 accountsChanged: ' + a);
+      }
+    }
+
+    function handleChainChanged(chainId){
+      log('🔁 chainChanged: ' + chainId);
+      // reload provider/network info
+      if(web3Provider){
+        web3Provider.getNetwork().then(n => {
+          document.getElementById('connectedInfo').innerText = document.getElementById('connectedInfo').innerText + ` (chainId: ${n.chainId})`;
+        })
+      }
+    }
+
+    function disconnect(){
+      if(selectedInjectedProvider && selectedInjectedProvider.removeListener){
+        try{ selectedInjectedProvider.removeListener('accountsChanged', handleAccountsChanged); }catch(e){}
+        try{ selectedInjectedProvider.removeListener('chainChanged', handleChainChanged); }catch(e){}
+      }
+      web3Provider = null;
+      signer = null;
+      selectedInjectedProvider = null;
+      document.getElementById('connectedInfo').innerText = 'Not connected';
+      document.getElementById('btnDisconnect').classList.add('hidden');
+      document.getElementById('btnConnect').classList.remove('hidden');
+      log('🔌 Wallet disconnected');
+    }
 
     // ======================
-    // Bonus Reward
+    // Leaderboard (same as before)
+    // ======================
+    let adminStakerData = [];
+    let refreshInterval;
+
+    async function loadLeaderboard(){
+      const tbody = document.getElementById("adminLeaderboard");
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
+
+      const contract = new ethers.Contract(
+        STAKING_CONTRACT,
+        [
+          "function getAllStakers() view returns (address[])",
+          "function getStaked(address user) view returns (uint256)"
+        ],
+        web3Provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
+      );
+
+      try {
+        const stakers = await contract.getAllStakers();
+        adminStakerData = [];
+        for (let addr of stakers) {
+          const amount = await contract.getStaked(addr);
+          adminStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+        }
+
+        // Default sort by amount (desc)
+        adminStakerData.sort((a, b) => b.amount - a.amount);
+
+        renderAdminLeaderboard();
+        log("📊 Leaderboard dimuat");
+      } catch(err){
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
+      }
+    }
+
+    function renderAdminLeaderboard(){
+      const tbody = document.getElementById("adminLeaderboard");
+      if (!tbody) return;
+
+      let data = [...adminStakerData];
+
+      // Filter
+      const search = document.getElementById("searchAdmin")?.value.trim().toLowerCase();
+      if (search) {
+        data = data.filter(item => item.addr.toLowerCase().includes(search));
+      }
+
+      // Sort
+      const sort = document.getElementById("sortAdmin")?.value;
+      if (sort === "amount") {
+        data.sort((a, b) => b.amount - a.amount);
+      }
+
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Tidak ada data</td></tr>`;
+        return;
+      }
+
+      data.forEach((item, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2">${i+1}</td>
+            <td class="p-2">${item.addr.slice(0,6)}...${item.addr.slice(-4)}</td>
+            <td class="p-2">${item.amount} KN</td>
+          </tr>`;
+      });
+    }
+
+    // ======================
+    // Bonus Reward (uses connected wallet if available)
     // ======================
     async function giveBonus(){
       try {
-        if(!window.ethereum){
-          alert("Hubungkan MetaMask untuk kirim bonus");
+        if(!signer){
+          // try to connect silently
+          if(window.ethereum) await onConnect();
+        }
+        if(!signer){
+          alert("Hubungkan wallet untuk kirim bonus");
           return;
         }
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
 
         const token = new ethers.Contract(
           KN,
@@ -269,7 +384,11 @@ function doLogin(){
       li.innerText = new Date().toLocaleTimeString()+" - "+msg;
       document.getElementById("logList").appendChild(li);
     }
-  </script>
 
-</body>
+    // Auto-detect on load
+    window.addEventListener('load', () => {
+      try{ detectProviders(); } catch(e){}
+    });
+
+  </script></body>
 </html>
