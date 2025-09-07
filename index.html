@@ -83,35 +83,57 @@
         </p>
       </section>
 
-      <!-- Leaderboard -->
-      <section id="leaderboardSection" class="hidden mt-6">
-        <h2 class="text-2xl font-bold text-yellow-400 mb-4">🏆 Leaderboard Staker</h2>
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
-          <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
-            class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
-            oninput="renderAdminLeaderboard()" />
+  <!-- Leaderboard -->
+<section id="leaderboardSection" class="hidden mt-6">
+  <h2 class="text-2xl font-bold text-yellow-400 mb-4">🏆 Leaderboard Staker</h2>
 
-          <select id="sortAdmin" onchange="renderAdminLeaderboard()"
-            class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
-            <option value="rank">Sort by Rank</option>
-            <option value="amount">Sort by Staked</option>
-          </select>
-        </div>
+  <!-- Total staked -->
+<div id="totalStakedBox" class="mb-4 text-lg font-semibold text-green-400">
+  <div class="flex items-center gap-2">
+    <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+    Loading total staked...
+  </div>
+</div>
 
-        <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
-          <thead class="bg-gray-800 text-yellow-400">
-            <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
-          </thead>
-          <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
-            <tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>
-          </tbody>
-        </table>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
+    <input id="searchAdmin" type="text" placeholder="🔍 Cari wallet..."
+      class="p-2 rounded bg-gray-700 text-white border border-gray-600 w-full md:w-1/2"
+      oninput="renderAdminLeaderboard()" />
 
-        <button onclick="exportCSV()" 
-          class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
-          ⬇️ Export CSV
-        </button>
-      </section>
+    <select id="sortAdmin" onchange="renderAdminLeaderboard()"
+      class="p-2 rounded bg-gray-700 text-yellow-400 border border-gray-600">
+      <option value="rank">Sort by Rank</option>
+      <option value="amount">Sort by Staked</option>
+    </select>
+  </div>
+
+  <table class="w-full text-left border border-gray-700 rounded overflow-hidden">
+    <thead class="bg-gray-800 text-yellow-400">
+      <tr><th class="p-2">Rank</th><th class="p-2">Wallet</th><th class="p-2">Staked KN</th></tr>
+    </thead>
+   <tbody id="adminLeaderboard" class="bg-gray-900 text-gray-300">
+  <tr>
+    <td colspan="3" class="p-3 text-center">
+      <div class="flex justify-center items-center gap-2">
+        <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        Loading data...
+      </div>
+    </td>
+  </tr>
+</tbody>
+  </table>
+
+  <button onclick="exportCSV()" 
+    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-400">
+    ⬇️ Export CSV
+  </button>
+</section>
 
       <!-- Bonus Reward -->
 <section id="bonusSection" class="hidden mt-6">
@@ -349,58 +371,82 @@ const faucetAbi = [
       log('🔌 Wallet disconnected');
     }
 
-    // -----------------------
-    // LEADERBOARD
-    // -----------------------
-    async function loadLeaderboard(){
-      const tbody = document.getElementById("adminLeaderboard");
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
+  // -----------------------
+// LEADERBOARD (BSC TESTNET)
+// -----------------------
+async function loadLeaderboard(){
+  const tbody = document.getElementById("adminLeaderboard");
+  const totalBox = document.getElementById("totalStakedBox");
 
-      const providerForRead = web3Provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org");
-      const contract = new ethers.Contract(
-        STAKING_CONTRACT,
-        [
-          "function getAllStakers() view returns (address[])",
-          "function getStaked(address user) view returns (uint256)"
-        ],
-        providerForRead
-      );
+  // Loading spinner
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="p-3 text-center">
+        <div class="flex justify-center items-center gap-2">
+          <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+          Loading data...
+        </div>
+      </td>
+    </tr>`;
+  totalBox.innerHTML = `
+    <div class="flex justify-center items-center gap-2 text-yellow-400">
+      <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      Loading total staked...
+    </div>`;
 
-      try {
-        const stakers = await contract.getAllStakers();
-        adminStakerData = [];
-        for (let addr of stakers) {
-          const amount = await contract.getStaked(addr);
-          // NOTE: adjust decimals if staking contract uses different decimals
-          adminStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
-        }
-        adminStakerData.sort((a, b) => b.amount - a.amount);
-        renderAdminLeaderboard();
-        log("📊 Leaderboard dimuat");
-      } catch(err){
-        console.error(err);
-        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
-      }
+  // Gunakan RPC BSC Testnet
+  let providerForRead;
+  try {
+    providerForRead = web3Provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545/");
+  } catch (err) {
+    console.warn("RPC utama gagal, pakai backup");
+    providerForRead = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
+  }
+
+  const contract = new ethers.Contract(
+    STAKING_CONTRACT,
+    [
+      "function getAllStakers() view returns (address[])",
+      "function getStaked(address user) view returns (uint256)"
+    ],
+    providerForRead
+  );
+
+  try {
+    const stakers = await contract.getAllStakers();
+    adminStakerData = [];
+    let total = ethers.BigNumber.from("0");
+
+    for (let addr of stakers) {
+      const amount = await contract.getStaked(addr);
+      total = total.add(amount);
+
+      // Token KN decimals = 6
+      const parsedAmount = parseFloat(ethers.utils.formatUnits(amount, 6));
+      adminStakerData.push({ addr, amount: parsedAmount });
     }
 
-    function renderAdminLeaderboard(){
-      const tbody = document.getElementById("adminLeaderboard");
-      if (!tbody) return;
-      let data = [...adminStakerData];
-      const search = document.getElementById("searchAdmin")?.value.trim().toLowerCase();
-      if (search) data = data.filter(item => item.addr.toLowerCase().includes(search));
-      const sort = document.getElementById("sortAdmin")?.value;
-      if (sort === "amount") data.sort((a, b) => b.amount - a.amount);
-      tbody.innerHTML = "";
-      if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Tidak ada data</td></tr>`;
-        return;
-      }
-      data.forEach((item, i) => {
-        tbody.innerHTML += `<tr><td class="p-2">${i+1}</td><td class="p-2">${item.addr.slice(0,6)}...${item.addr.slice(-4)}</td><td class="p-2">${item.amount} KN</td></tr>`;
-      });
-    }
+    // Sort besar ke kecil
+    adminStakerData.sort((a, b) => b.amount - a.amount);
 
+    // Update total staked
+    const totalParsed = ethers.utils.formatUnits(total, 6);
+    totalBox.innerText = `✅ Total Staked: ${totalParsed} KN`;
+
+    renderAdminLeaderboard();
+    log("📊 Leaderboard dimuat dari BSC Testnet");
+  } catch(err){
+    console.error("❌ Gagal load leaderboard:", err);
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
+    totalBox.innerText = "❌ Gagal hitung total staked";
+  }
+}
    // -----------------------
     // BONUS
     // -----------------------
