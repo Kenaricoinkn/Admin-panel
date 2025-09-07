@@ -174,63 +174,52 @@
   </div>
 
   <script>
-    // -----------------------
-// CONFIG & STATE
 // -----------------------
-const ADMIN_USER = "devkenari";
-const ADMIN_PASS = "Snowboy14";
-const STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78";
-// ========== STAKING ABI (lengkap dari kamu) ==========
-const stakingAbi = [
-  {"inputs":[{"internalType":"address","name":"_token","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BonusGiven","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"}],"name":"Claimed","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Staked","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdraw","type":"event"},
-  {"inputs":[],"name":"APY","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"YEAR_IN_SECONDS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"claimReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[],"name":"getAllStakers","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"giveBonus","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isStaker","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"pendingReward","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"_apy","type":"uint256"}],"name":"setAPY","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"stakers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"stakes","outputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"rewardDebt","type":"uint256"},{"internalType":"uint256","name":"lastUpdate","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}
-];
-const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
+// ADMIN LOGIN CONFIG
+// -----------------------
+const ADMIN_USER = "devkenari";   // username untuk login admin (dummy)
+const ADMIN_PASS = "Snowboy14";   // password untuk login admin (dummy)
 
-let web3Provider = null;
-let signer = null;
-let selectedInjectedProvider = null;
-let adminStakerData = [];
 
-// Faucet config
-const FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";
-const faucetAbi = [
-  {
-    "inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],
-    "name":"setAmount",
-    "outputs":[],
-    "stateMutability":"nonpayable",
-    "type":"function"
-  },
-  {
-    "inputs":[],
-    "name":"amount",
-    "outputs":[{"internalType":"uint256","name":"","type":"uint256"}],
-    "stateMutability":"view",
-    "type":"function"
-  }
+// -----------------------
+// BLOCKCHAIN CONFIG
+// -----------------------
+let KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";   // token KN
+let STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78"; // staking
+let FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d"; // faucet
+let BSC_CHAIN_ID = "0x61"; // BSC Testnet
+
+// ===== ABI untuk token KN =====
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function approve(address spender, uint256 amount) returns (bool)"
 ];
+
+// ===== ABI untuk user staking =====
+const STAKING_ABI = [
+  "function stake(uint256 amount) external",
+  "function withdraw(uint256 amount) external",
+  "function claimReward() external",
+  "function pendingReward(address user) view returns (uint256)",
+  "function getStaked(address user) view returns (uint256)"
+];
+
+// ===== ABI untuk leaderboard =====
+const LEADERBOARD_ABI = [
+  "function getAllStakers() view returns (address[])",
+  "function getStaked(address user) view returns (uint256)"
+];
+
+// ===== ABI untuk admin =====
+const ADMIN_ABI = [
+  "function giveBonus(address to, uint256 amount) external",
+  "function faucet() external",
+  "function setAmount(uint256 _amount) external",
+  "function owner() view returns (address)"
+];
+
+let provider = null, signer = null, userAddress = null;
 
     // -----------------------
     // LOGIN (sessionStorage)
@@ -397,108 +386,69 @@ const faucetAbi = [
       log('🔌 Wallet disconnected');
     }
 
-// -----------------------
-// LEADERBOARD (BSC TESTNET) — tanpa ERC20_ABI, decimals fix = 6
-// -----------------------
-async function loadLeaderboard(){
+// ===== Admin Leaderboard =====
+async function loadAdminLeaderboard() {
   const tbody = document.getElementById("adminLeaderboard");
   const totalBox = document.getElementById("totalStakedBox");
   if (!tbody || !totalBox) return;
 
-  // Spinner awal
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="3" class="p-3 text-center">
-        <div class="flex justify-center items-center gap-2">
-          <svg class="animate-spin h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-          </svg>
-          Loading data...
-        </div>
-      </td>
-    </tr>`;
-  totalBox.innerHTML = `
-    <div class="flex items-center gap-2 text-yellow-400">
-      <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-      </svg>
-      Loading total staked...
-    </div>`;
+  // spinner awal
+  tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
+  totalBox.innerText = "⟳ Loading total staked...";
 
   try {
-    // Gunakan RPC BSC Testnet (utama + backup)
-    let readProvider;
-    try {
-      readProvider = web3Provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545/");
-    } catch {
-      readProvider = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
-    }
+    const readProvider = provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
 
-    // Kontrak khusus leaderboard: hanya pakai fungsi yang dibutuhkan
-    const contract = new ethers.Contract(
-      STAKING_CONTRACT,
-      [
-        "function getAllStakers() view returns (address[])",
-        "function getStaked(address user) view returns (uint256)"
-      ],
-      readProvider
-    );
+    const staking = new ethers.Contract(STAKING_CONTRACT, LEADERBOARD_ABI, readProvider);
+    const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
+    const decimals = await token.decimals();
 
-    const DECIMALS = 6; // KN pakai 6 desimal
-
-    const stakers = await contract.getAllStakers();
+    const stakers = await staking.getAllStakers();
     if (!stakers || stakers.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada staker</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada wallet staking</td></tr>`;
       totalBox.innerText = "✅ Total Staked: 0 KN";
       return;
     }
 
-    // Ambil semua stake paralel
-    const stakesBn = await Promise.all(stakers.map(addr => contract.getStaked(addr)));
-
-    // Hitung total + siapkan data
     let total = ethers.BigNumber.from(0);
-    let data = stakers.map((addr, i) => {
-      const bn = stakesBn[i];
-      total = total.add(bn);
-      return { addr, amount: parseFloat(ethers.utils.formatUnits(bn, DECIMALS)) };
-    });
+    let stakerData = [];
 
-    // Filter yang 0 (opsional), lalu urut desc
-    data = data.filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount);
-
-    // Update total
-    const totalParsed = ethers.utils.formatUnits(total, DECIMALS);
-    totalBox.innerText = `✅ Total Staked: ${totalParsed} KN`;
-
-    // Render tabel
-    tbody.innerHTML = "";
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada staker aktif</td></tr>`;
-    } else {
-      data.forEach((s, i) => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="p-2">${i + 1}</td>
-            <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
-            <td class="p-2">${s.amount.toFixed(2)} KN</td>
-          </tr>`;
-      });
+    for (let addr of stakers) {
+      const amount = await staking.getStaked(addr);
+      total = total.add(amount);
+      const parsed = parseFloat(ethers.utils.formatUnits(amount, decimals));
+      if (parsed > 0) {
+        stakerData.push({ addr, amount: parsed });
+      }
     }
+
+    // sort desc
+    stakerData.sort((a, b) => b.amount - a.amount);
+
+    // total staked
+    totalBox.innerText = `✅ Total Staked: ${ethers.utils.formatUnits(total, decimals)} KN`;
+
+    // render table
+    tbody.innerHTML = "";
+    stakerData.forEach((s, i) => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">${i + 1}</td>
+          <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
+          <td class="p-2">${s.amount.toFixed(2)} KN</td>
+        </tr>`;
+    });
   } catch (err) {
-    console.error("❌ loadLeaderboard error:", err);
-    const msg = (err && (err.message || err.reason)) ? (err.message || err.reason) : String(err);
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load<br><span class="text-xs opacity-75">${msg}</span></td></tr>`;
+    console.error("❌ loadAdminLeaderboard error:", err);
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
     totalBox.innerText = "❌ Gagal hitung total staked";
   }
 }
 
-// Auto refresh tiap 1 menit (dan panggil saat halaman siap)
+// auto refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
-  loadLeaderboard();
-  setInterval(loadLeaderboard, 60 * 1000);
+  loadAdminLeaderboard();
+  setInterval(loadAdminLeaderboard, 60 * 1000);
 });
    // -----------------------
     // BONUS
