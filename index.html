@@ -394,46 +394,71 @@ async function loadAdminLeaderboard() {
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
   totalBox.innerText = "⟳ Loading total staked...";
 
+  const readProvider = provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
+  const contract = new ethers.Contract(
+    STAKING_CONTRACT,
+    [
+      "function getAllStakers() view returns (address[])",
+      "function getStaked(address user) view returns (uint256)"
+    ],
+    readProvider
+  );
+
   try {
-    const readProvider = provider || new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
-    const staking = new ethers.Contract(STAKING_CONTRACT, LEADERBOARD_ABI, readProvider);
     const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
     const decimals = await token.decimals();
 
-    const stakers = await staking.getAllStakers();
-    if (!stakers.length) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400">⚠️ Belum ada wallet staking</td></tr>`;
+    const stakers = await contract.getAllStakers();
+    if (!stakers || stakers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet staking</td></tr>`;
       totalBox.innerText = "✅ Total Staked: 0 KN";
       return;
     }
 
-    let total = ethers.BigNumber.from(0);
     let stakerData = [];
+    let total = ethers.BigNumber.from(0);
 
     for (let addr of stakers) {
-      const amount = await staking.getStaked(addr);
+      const amount = await contract.getStaked(addr);
       total = total.add(amount);
-      const parsed = parseFloat(ethers.utils.formatUnits(amount, decimals));
-      if (parsed > 0) stakerData.push({ addr, amount: parsed });
+      const formatted = ethers.utils.formatUnits(amount, decimals);
+      const raw = parseFloat(formatted);
+      if (raw > 0) {
+        stakerData.push({ addr, amount: raw.toFixed(2), raw });
+      }
     }
 
-    stakerData.sort((a, b) => b.amount - a.amount);
+    if (stakerData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet staking</td></tr>`;
+      totalBox.innerText = "✅ Total Staked: 0 KN";
+      return;
+    }
 
+    // urutkan desc
+    stakerData.sort((a, b) => b.raw - a.raw);
+
+    // tampilkan total staked
     totalBox.innerText = `✅ Total Staked: ${ethers.utils.formatUnits(total, decimals)} KN`;
 
-    tbody.innerHTML = stakerData.map((s, i) => `
-      <tr>
-        <td class="p-2">${i + 1}</td>
-        <td class="p-2">${s.addr.slice(0,6)}...${s.addr.slice(-4)}</td>
-        <td class="p-2">${s.amount.toFixed(2)} KN</td>
-      </tr>`).join("");
+    // render semua staker (bisa batasi top 50 kalau perlu)
+    tbody.innerHTML = "";
+    stakerData.forEach((item, i) => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">#${i + 1}</td>
+          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
+          <td class="p-2">${item.amount} KN</td>
+        </tr>`;
+    });
   } catch (err) {
     console.error("❌ loadAdminLeaderboard error:", err);
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal load</td></tr>`;
     totalBox.innerText = "❌ Gagal hitung total staked";
   }
 }
 
+// auto refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
   loadAdminLeaderboard();
   setInterval(loadAdminLeaderboard, 60000);
