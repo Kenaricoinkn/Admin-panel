@@ -1,0 +1,14 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Topup</title>
+<link rel="stylesheet" href="css/styles.css">
+<script type="module" src="js/firebase-init.js"></script>
+</head><body class="p-4 text-slate-100">
+  <h1 class="text-xl font-bold mb-3">Admin — Verifikasi Topup</h1>
+  <div id="gate" class="text-slate-300">Memuat auth…</div>
+  <div id="app" class="hidden">
+    <div class="mb-3">Masuk sebagai: <span id="who"></span> <button id="logout" class="ml-2 px-2 py-1 rounded bg-white/10">Keluar</button></div>
+    <ul id="list" class="space-y-2"></ul>
+  </div>
+<script type="module" src="js/admin.js"></script>
+</body></html>
